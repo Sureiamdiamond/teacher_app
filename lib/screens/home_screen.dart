@@ -23,6 +23,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, String> notesMap = {};
   Map<String, TextEditingController> textControllers = {};
   Map<String, bool> isEditingNotes = {};
+  // Separate note maps for each status
+  Map<String, String> excusedNotesMap = {};
+  Map<String, String> lateNotesMap = {};
+  Map<String, String> absentNotesMap = {};
+  Map<String, TextEditingController> excusedTextControllers = {};
+  Map<String, TextEditingController> lateTextControllers = {};
+  Map<String, TextEditingController> absentTextControllers = {};
+  Map<String, bool> excusedEditingNotes = {};
+  Map<String, bool> lateEditingNotes = {};
+  Map<String, bool> absentEditingNotes = {};
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String sortBy = 'number'; // 'number', 'name', or 'firstName'
@@ -51,10 +61,28 @@ class _HomeScreenState extends State<HomeScreen> {
     final todayRecords = await DataService.getAttendanceForDate(selectedDate);
     final Map<String, AttendanceStatus> todayAttendance = {};
     final Map<String, String> todayNotes = {};
+    final Map<String, String> todayExcusedNotes = {};
+    final Map<String, String> todayLateNotes = {};
+    final Map<String, String> todayAbsentNotes = {};
+    
     for (final record in todayRecords) {
       todayAttendance[record.studentId] = record.status;
       if (record.notes != null) {
         todayNotes[record.studentId] = record.notes!;
+        // Separate notes by status
+        switch (record.status) {
+          case AttendanceStatus.excused:
+            todayExcusedNotes[record.studentId] = record.notes!;
+            break;
+          case AttendanceStatus.late:
+            todayLateNotes[record.studentId] = record.notes!;
+            break;
+          case AttendanceStatus.absent:
+            todayAbsentNotes[record.studentId] = record.notes!;
+            break;
+          default:
+            break;
+        }
       }
     }
 
@@ -63,6 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
       students = loadedStudents..sort((a, b) => a.studentNumber.compareTo(b.studentNumber));
       attendanceMap = todayAttendance;
       notesMap = todayNotes;
+      excusedNotesMap = todayExcusedNotes;
+      lateNotesMap = todayLateNotes;
+      absentNotesMap = todayAbsentNotes;
       
       // Initialize text controllers for each student
       for (final student in loadedStudents) {
@@ -71,8 +102,28 @@ class _HomeScreenState extends State<HomeScreen> {
             text: todayNotes[student.id] ?? '',
           );
         }
+        // Initialize separate controllers for each status
+        if (!excusedTextControllers.containsKey(student.id)) {
+          excusedTextControllers[student.id] = TextEditingController(
+            text: todayExcusedNotes[student.id] ?? '',
+          );
+        }
+        if (!lateTextControllers.containsKey(student.id)) {
+          lateTextControllers[student.id] = TextEditingController(
+            text: todayLateNotes[student.id] ?? '',
+          );
+        }
+        if (!absentTextControllers.containsKey(student.id)) {
+          absentTextControllers[student.id] = TextEditingController(
+            text: todayAbsentNotes[student.id] ?? '',
+          );
+        }
+        
         // Initialize editing state - if there's a saved note, don't show editing mode
         isEditingNotes[student.id] = !(todayNotes[student.id]?.isNotEmpty ?? false);
+        excusedEditingNotes[student.id] = !(todayExcusedNotes[student.id]?.isNotEmpty ?? false);
+        lateEditingNotes[student.id] = !(todayLateNotes[student.id]?.isNotEmpty ?? false);
+        absentEditingNotes[student.id] = !(todayAbsentNotes[student.id]?.isNotEmpty ?? false);
       }
       
       isLoading = false;
@@ -210,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     attendanceMap[student.id] == AttendanceStatus.absent) ...[
                   const SizedBox(height: 12),
                   // Show editing mode if no saved note or user wants to edit
-                  if (isEditingNotes[student.id] ?? true) ...[
+                  if (_getEditingState(student) ?? true) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
@@ -233,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Directionality(
                             textDirection: TextDirection.rtl,
                             child: TextField(
-                              controller: textControllers[student.id],
+                              controller: _getTextController(student),
                               textDirection: TextDirection.rtl,
                               textAlign: TextAlign.right,
                               maxLength: attendanceMap[student.id] == AttendanceStatus.late ? 5 : 20,
@@ -253,8 +304,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         : 'دلیل غیبت...',
                                 border: InputBorder.none,
                                 counterText: attendanceMap[student.id] == AttendanceStatus.late
-                                    ? '${textControllers[student.id]?.text.length ?? 0}/5'
-                                    : '${textControllers[student.id]?.text.length ?? 0}/20',
+                                    ? '${_getTextController(student)?.text.length ?? 0}/5'
+                                    : '${_getTextController(student)?.text.length ?? 0}/20',
                                 counterStyle: TextStyle(
                                   fontSize: 8,
                                   color: Colors.grey[500],
@@ -277,16 +328,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 if (attendanceMap[student.id] == AttendanceStatus.late) {
                                   // Format time input (HH:MM)
                                   String formattedValue = _formatTimeInput(value);
-                                  textControllers[student.id]?.text = formattedValue;
-                                  textControllers[student.id]?.selection = TextSelection.fromPosition(
+                                  _getTextController(student)?.text = formattedValue;
+                                  _getTextController(student)?.selection = TextSelection.fromPosition(
                                     TextPosition(offset: formattedValue.length),
                                   );
                                   setState(() {
-                                    notesMap[student.id] = formattedValue;
+                                    _updateNotesMap(student, formattedValue);
                                   });
                                 } else {
                                   setState(() {
-                                    notesMap[student.id] = value;
+                                    _updateNotesMap(student, value);
                                   });
                                 }
                               },
@@ -305,6 +356,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                     : attendanceMap[student.id] == AttendanceStatus.absent
                                         ? Colors.red[600]
                                         : Colors.blue[600],
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Add "No Note" button below save button
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _saveWithoutNote(student),
+                              icon: const Icon(Icons.check_circle_outline, size: 16),
+                              label: const Text('یادداشتی ندارم'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[600],
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 8),
                                 shape: RoundedRectangleBorder(
@@ -356,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Directionality(
                               textDirection: TextDirection.rtl,
                               child: Text(
-                                notesMap[student.id] ?? '',
+                                _getSavedNote(student) ?? '',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: attendanceMap[student.id] == AttendanceStatus.late
@@ -438,6 +507,94 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String? _getSavedNote(Student student) {
+    final status = attendanceMap[student.id];
+    if (status == null) return notesMap[student.id];
+    
+    switch (status) {
+      case AttendanceStatus.excused:
+        return excusedNotesMap[student.id];
+      case AttendanceStatus.late:
+        return lateNotesMap[student.id];
+      case AttendanceStatus.absent:
+        return absentNotesMap[student.id];
+      default:
+        return notesMap[student.id];
+    }
+  }
+
+  void _setEditingState(Student student, bool isEditing) {
+    final status = attendanceMap[student.id];
+    if (status == null) return;
+    
+    switch (status) {
+      case AttendanceStatus.excused:
+        excusedEditingNotes[student.id] = isEditing;
+        break;
+      case AttendanceStatus.late:
+        lateEditingNotes[student.id] = isEditing;
+        break;
+      case AttendanceStatus.absent:
+        absentEditingNotes[student.id] = isEditing;
+        break;
+      default:
+        break;
+    }
+    isEditingNotes[student.id] = isEditing;
+  }
+
+  void _updateNotesMap(Student student, String value) {
+    final status = attendanceMap[student.id];
+    if (status == null) return;
+    
+    switch (status) {
+      case AttendanceStatus.excused:
+        excusedNotesMap[student.id] = value;
+        break;
+      case AttendanceStatus.late:
+        lateNotesMap[student.id] = value;
+        break;
+      case AttendanceStatus.absent:
+        absentNotesMap[student.id] = value;
+        break;
+      default:
+        break;
+    }
+    notesMap[student.id] = value;
+  }
+
+  TextEditingController? _getTextController(Student student) {
+    final status = attendanceMap[student.id];
+    if (status == null) return textControllers[student.id];
+    
+    switch (status) {
+      case AttendanceStatus.excused:
+        return excusedTextControllers[student.id];
+      case AttendanceStatus.late:
+        return lateTextControllers[student.id];
+      case AttendanceStatus.absent:
+        return absentTextControllers[student.id];
+      default:
+        return textControllers[student.id];
+    }
+  }
+
+  bool? _getEditingState(Student student) {
+    final status = attendanceMap[student.id];
+    if (status == null) return true;
+    
+    switch (status) {
+      case AttendanceStatus.excused:
+        return excusedEditingNotes[student.id] ?? true;
+      case AttendanceStatus.late:
+        return lateEditingNotes[student.id] ?? true;
+      case AttendanceStatus.absent:
+        return absentEditingNotes[student.id] ?? true;
+      default:
+        return true;
+    }
+  }
+
   bool _isStatusSelected(Student student, String statusText) {
     final currentStatus = attendanceMap[student.id];
     if (currentStatus == null) return false;
@@ -504,6 +661,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _saveWithoutNote(Student student) async {
+    try {
+      final status = attendanceMap[student.id];
+      if (status == null) return;
+
+      await DataService.markAttendance(
+        student.id,
+        selectedDate,
+        status,
+        notes: 'یادداشتی ندارم', // Save "No note" text
+      );
+
+      setState(() {
+        _updateNotesMap(student, 'یادداشتی ندارم');
+        _setEditingState(student, false); // Hide TextField
+        _getTextController(student)?.clear();
+      });
+    } catch (e) {
+      // Handle error silently
+    }
+  }
+
   Future<void> _editStudent(Student student) async {
     final result = await Navigator.push(
       context,
@@ -547,7 +726,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _saveNotes(Student student) async {
     try {
-      final notes = textControllers[student.id]?.text ?? '';
+      final notes = _getTextController(student)?.text ?? '';
       final status = attendanceMap[student.id] ?? AttendanceStatus.absent;
 
       await DataService.markAttendance(
@@ -558,8 +737,8 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       setState(() {
-        notesMap[student.id] = notes;
-        isEditingNotes[student.id] = false; // Switch to display mode
+        _updateNotesMap(student, notes);
+        _setEditingState(student, false); // Switch to display mode
       });
     } catch (e) {
       // Handle error silently
@@ -578,9 +757,9 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       setState(() {
-        notesMap[student.id] = '';
-        isEditingNotes[student.id] = true; // Switch back to editing mode
-        textControllers[student.id]?.clear();
+        _updateNotesMap(student, '');
+        _setEditingState(student, true); // Switch back to editing mode
+        _getTextController(student)?.clear();
       });
     } catch (e) {
       // Handle error silently
@@ -979,17 +1158,19 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
                                   value: sortBy,
+                                  alignment: Alignment.topCenter,
+                                  isExpanded: true,
                                   onChanged: (String? newValue) {
                                     setState(() {
                                       sortBy = newValue!;
                                     });
                                   },
+                                  hint: Icon(Icons.filter_list, color: Colors.blue[700], size: 20),
                                   icon: Icon(Icons.keyboard_arrow_down, color: Colors.blue[700]),
                                    items: <String>['number', 'name', 'firstName'].map<DropdownMenuItem<String>>((String value) {
                                      return DropdownMenuItem<String>(
                                        value: value,
-                                       child: Align(
-                                         alignment: Alignment.center,
+                                       child: Center(
                                          child: Text(
                                            value == 'number' ? 'شماره' : 
                                            value == 'name' ? 'نام خانوادگی' : 'نام',

@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:excel/excel.dart' hide Border;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
+import 'dart:io';
 import '../models/student.dart';
 import '../models/attendance_record.dart';
 import '../services/data_service.dart';
@@ -151,6 +157,40 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         ),
         backgroundColor: Colors.blue[700],
         elevation: 0,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.download, color: Colors.white),
+            onSelected: (value) async {
+              if (value == 'pdf') {
+                await _exportToPDF();
+              } else if (value == 'excel') {
+                await _exportToExcel();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'pdf',
+                child: Row(
+                  children: [
+                    Icon(Icons.picture_as_pdf, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('خروجی PDF'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'excel',
+                child: Row(
+                  children: [
+                    Icon(Icons.table_chart, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text('خروجی Excel'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -291,7 +331,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                             IconButton(
                               onPressed: () {
                                 setState(() {
-                                  selectedDate = selectedDate.subtract(const Duration(days: 1));
+                                  selectedDate = selectedDate.add(const Duration(days: 1));
                                 });
                               },
                               icon: Icon(Icons.chevron_left, color: Colors.blue[700]),
@@ -337,7 +377,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                             IconButton(
                               onPressed: () {
                                 setState(() {
-                                  selectedDate = selectedDate.add(const Duration(days: 1));
+                                  selectedDate = selectedDate.subtract(const Duration(days: 1));
                                 });
                               },
                               icon: Icon(Icons.chevron_right, color: Colors.blue[700]),
@@ -531,5 +571,199 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         selectedDate = date.toDateTime();
       });
     }
+  }
+
+  Future<void> _exportToPDF() async {
+    try {
+      final reportData = _getReportData();
+      if (reportData.isEmpty) {
+        _showMessage('هیچ داده‌ای برای خروجی وجود ندارد');
+        return;
+      }
+
+      final pdf = pw.Document();
+      
+      // Add content to PDF
+      pdf.addPage(
+        pw.Page(
+          textDirection: pw.TextDirection.rtl,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Header(
+                  level: 0,
+                  child: pw.Text(
+                    'گزارش حضور و غیاب',
+                    style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                  ),
+                ),
+                pw.SizedBox(height: 20),
+                pw.Text(
+                  'تاریخ: ${_getPersianDate(selectedDate)}',
+                  style: pw.TextStyle(fontSize: 16),
+                ),
+                pw.SizedBox(height: 20),
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  columnWidths: {
+                    0: const pw.FixedColumnWidth(50),
+                    1: const pw.FixedColumnWidth(100),
+                    2: const pw.FixedColumnWidth(100),
+                    3: const pw.FixedColumnWidth(80),
+                    4: const pw.FixedColumnWidth(80),
+                    5: const pw.FlexColumnWidth(),
+                  },
+                  children: [
+                    // Header row
+                    pw.TableRow(
+                      decoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text('ترتیب', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text('نام', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text('نام خانوادگی', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text('تاریخ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text('وضعیت', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text('یادداشت', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                    // Data rows
+                    ...reportData.map((record) {
+                      final student = students.firstWhere((s) => s.id == record.studentId);
+                      return pw.TableRow(
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(student.studentNumber.toString()),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(student.firstName),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(student.lastName),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(_getPersianDate(record.date)),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(_getStatusText(record.status)),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(record.notes ?? ''),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      // Save PDF
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/attendance_report_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      await file.writeAsBytes(await pdf.save());
+      
+      // Open file
+      await OpenFile.open(file.path);
+      _showMessage('فایل PDF با موفقیت ایجاد شد');
+    } catch (e) {
+      _showMessage('خطا در ایجاد فایل PDF: $e');
+    }
+  }
+
+  Future<void> _exportToExcel() async {
+    try {
+      final reportData = _getReportData();
+      if (reportData.isEmpty) {
+        _showMessage('هیچ داده‌ای برای خروجی وجود ندارد');
+        return;
+      }
+
+      final excel = Excel.createExcel();
+      final sheet = excel['گزارش حضور و غیاب'];
+      
+      // Add headers
+      sheet.cell(CellIndex.indexByString('A1')).value = TextCellValue('ترتیب');
+      sheet.cell(CellIndex.indexByString('B1')).value = TextCellValue('نام');
+      sheet.cell(CellIndex.indexByString('C1')).value = TextCellValue('نام خانوادگی');
+      sheet.cell(CellIndex.indexByString('D1')).value = TextCellValue('تاریخ');
+      sheet.cell(CellIndex.indexByString('E1')).value = TextCellValue('وضعیت');
+      sheet.cell(CellIndex.indexByString('F1')).value = TextCellValue('یادداشت');
+
+      // Add data
+      for (int i = 0; i < reportData.length; i++) {
+        final record = reportData[i];
+        final student = students.firstWhere((s) => s.id == record.studentId);
+        final row = i + 2;
+        
+        sheet.cell(CellIndex.indexByString('A$row')).value = TextCellValue(student.studentNumber.toString());
+        sheet.cell(CellIndex.indexByString('B$row')).value = TextCellValue(student.firstName);
+        sheet.cell(CellIndex.indexByString('C$row')).value = TextCellValue(student.lastName);
+        sheet.cell(CellIndex.indexByString('D$row')).value = TextCellValue(_getPersianDate(record.date));
+        sheet.cell(CellIndex.indexByString('E$row')).value = TextCellValue(_getStatusTextForExport(record.status));
+        sheet.cell(CellIndex.indexByString('F$row')).value = TextCellValue(record.notes ?? '');
+      }
+
+      // Save Excel
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/attendance_report_${DateTime.now().millisecondsSinceEpoch}.xlsx');
+      final bytes = excel.encode();
+      await file.writeAsBytes(bytes!);
+      
+      // Open file
+      await OpenFile.open(file.path);
+      _showMessage('فایل Excel با موفقیت ایجاد شد');
+    } catch (e) {
+      _showMessage('خطا در ایجاد فایل Excel: $e');
+    }
+  }
+
+  String _getStatusTextForExport(AttendanceStatus status) {
+    switch (status) {
+      case AttendanceStatus.present:
+        return 'حاضر';
+      case AttendanceStatus.absent:
+        return 'غایب';
+      case AttendanceStatus.excused:
+        return 'موجه';
+      case AttendanceStatus.late:
+        return 'تأخیر';
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.blue[700],
+      ),
+    );
   }
 }
