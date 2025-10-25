@@ -145,11 +145,15 @@ class _ClassHomeScreenState extends State<ClassHomeScreen> {
   }
 
   Future<void> _selectDate() async {
+    final now = DateTime.now();
+    final oneYearAgo = now.subtract(const Duration(days: 365));
+    final oneDayAhead = now.add(const Duration(days: 1));
+    
     final date = await showPersianDatePicker(
       context: context,
       initialDate: Jalali.fromDateTime(selectedDate),
-      firstDate: Jalali(1400),
-      lastDate: Jalali(1450),
+      firstDate: Jalali.fromDateTime(oneYearAgo),
+      lastDate: Jalali.fromDateTime(oneDayAhead),
       builder: (context, child) {
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -846,10 +850,17 @@ class _ClassHomeScreenState extends State<ClassHomeScreen> {
                   children: [
                     IconButton(
                       onPressed: () {
-                        setState(() {
-                          selectedDate = selectedDate.add(const Duration(days: 1));
-                        });
-                        _loadStudents();
+                        final now = DateTime.now();
+                        final oneDayAhead = now.add(const Duration(days: 1));
+                        final nextDay = selectedDate.add(const Duration(days: 1));
+                        
+                        // Check if next day is within limits
+                        if (nextDay.isBefore(oneDayAhead) || nextDay.isAtSameMomentAs(oneDayAhead)) {
+                          setState(() {
+                            selectedDate = nextDay;
+                          });
+                          _loadStudents();
+                        }
                       },
                       icon: Icon(Icons.chevron_left, color: Colors.blue[700]),
                     ),
@@ -866,10 +877,17 @@ class _ClassHomeScreenState extends State<ClassHomeScreen> {
                     ),
                     IconButton(
                       onPressed: () {
-                        setState(() {
-                          selectedDate = selectedDate.subtract(const Duration(days: 1));
-                        });
-                        _loadStudents();
+                        final now = DateTime.now();
+                        final oneYearAgo = now.subtract(const Duration(days: 365));
+                        final previousDay = selectedDate.subtract(const Duration(days: 1));
+                        
+                        // Check if previous day is within limits
+                        if (previousDay.isAfter(oneYearAgo) || previousDay.isAtSameMomentAs(oneYearAgo)) {
+                          setState(() {
+                            selectedDate = previousDay;
+                          });
+                          _loadStudents();
+                        }
                       },
                       icon: Icon(Icons.chevron_right, color: Colors.blue[700]),
                     ),

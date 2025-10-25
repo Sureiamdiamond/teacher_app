@@ -8,7 +8,6 @@ import 'add_student_screen.dart';
 import 'attendance_screen.dart';
 import 'attendance_history_screen.dart';
 import 'edit_student_screen.dart';
-import 'class_management_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -153,11 +152,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _selectDate() async {
+    final now = DateTime.now();
+    final oneYearAgo = now.subtract(const Duration(days: 365));
+    final oneDayAhead = now.add(const Duration(days: 1));
+    
     final date = await showPersianDatePicker(
       context: context,
       initialDate: Jalali.fromDateTime(selectedDate),
-      firstDate: Jalali(1400),
-      lastDate: Jalali(1450),
+      firstDate: Jalali.fromDateTime(oneYearAgo),
+      lastDate: Jalali.fromDateTime(oneDayAhead),
       builder: (context, child) {
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -876,6 +879,208 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadClasses() async {
+    final loadedClasses = await DataService.getClasses();
+    setState(() {
+      classes = loadedClasses;
+    });
+  }
+
+  Future<void> _showAddClassDialog() async {
+    final TextEditingController classNameController = TextEditingController();
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('اضافه کردن کلاس جدید'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: classNameController,
+              decoration: const InputDecoration(
+                labelText: 'نام کلاس',
+                hintText: 'نام کلاس را وارد کنید',
+                border: OutlineInputBorder(),
+              ),
+              textDirection: TextDirection.rtl,
+              textAlign: TextAlign.right,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('لغو'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (classNameController.text.trim().isNotEmpty) {
+                Navigator.pop(context, true);
+              }
+            },
+            child: const Text('اضافه کردن'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && classNameController.text.trim().isNotEmpty) {
+      final newClass = ClassModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: classNameController.text.trim(),
+        description: '',
+        createdAt: DateTime.now(),
+      );
+      
+      await DataService.addClass(newClass);
+      await _loadClasses();
+      
+      // Select the newly created class
+      setState(() {
+        selectedClass = newClass;
+      });
+      await _loadStudents();
+    }
+  }
+
+  Future<void> _showClassContextMenu(ClassModel classModel) async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'گزینه‌های کلاس "${classModel.name}"',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.edit, color: Colors.blue),
+              title: const Text('ویرایش کلاس'),
+              onTap: () {
+                Navigator.pop(context, 'edit');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('حذف کلاس'),
+              onTap: () {
+                Navigator.pop(context, 'delete');
+              },
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('لغو'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == 'edit') {
+      await _editClass(classModel);
+    } else if (result == 'delete') {
+      await _deleteClass(classModel);
+    }
+  }
+
+  Future<void> _editClass(ClassModel classModel) async {
+    final TextEditingController classNameController = TextEditingController(text: classModel.name);
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ویرایش کلاس'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: classNameController,
+              decoration: const InputDecoration(
+                labelText: 'نام کلاس',
+                hintText: 'نام کلاس را وارد کنید',
+                border: OutlineInputBorder(),
+              ),
+              textDirection: TextDirection.rtl,
+              textAlign: TextAlign.right,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('لغو'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (classNameController.text.trim().isNotEmpty) {
+                Navigator.pop(context, true);
+              }
+            },
+            child: const Text('ذخیره'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && classNameController.text.trim().isNotEmpty) {
+      final updatedClass = classModel.copyWith(
+        name: classNameController.text.trim(),
+      );
+      
+      await DataService.updateClass(updatedClass);
+      await _loadClasses();
+      
+      // Update selected class if it's the one being edited
+      if (selectedClass?.id == classModel.id) {
+        setState(() {
+          selectedClass = updatedClass;
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteClass(ClassModel classModel) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('حذف کلاس'),
+        content: Text('آیا از حذف کلاس "${classModel.name}" اطمینان دارید؟\nتمام دانش‌آموزان این کلاس نیز حذف خواهند شد.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('لغو'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('حذف', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await DataService.deleteClass(classModel.id);
+      await _loadClasses();
+      
+      // If the deleted class was selected, clear selection
+      if (selectedClass?.id == classModel.id) {
+        setState(() {
+          selectedClass = null;
+          students.clear();
+          attendanceMap.clear();
+          notesMap.clear();
+        });
+      }
+    }
+  }
 
   List<Student> _getFilteredStudents() {
     List<Student> filteredStudents;
@@ -972,12 +1177,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onSelected: (String value) async {
               switch (value) {
                 case 'classes':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ClassManagementScreen(),
-                    ),
-                  );
+                  await _showAddClassDialog();
                   break;
                 case 'report':
                   Navigator.push(
@@ -1007,7 +1207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.class_, color: Colors.green[700]),
                     const SizedBox(width: 8),
-                    const Text('کلاس‌ها'),
+                    const Text('ساخت کلاس'),
                   ],
                 ),
               ),
@@ -1080,10 +1280,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Next day button (moved to left)
                       IconButton(
                         onPressed: () {
-                          setState(() {
-                            selectedDate = selectedDate.add(const Duration(days: 1));
-                          });
-                          _loadStudents();
+                          final now = DateTime.now();
+                          final oneDayAhead = now.add(const Duration(days: 1));
+                          final nextDay = selectedDate.add(const Duration(days: 1));
+                          
+                          // Check if next day is within limits
+                          if (nextDay.isBefore(oneDayAhead) || nextDay.isAtSameMomentAs(oneDayAhead)) {
+                            setState(() {
+                              selectedDate = nextDay;
+                            });
+                            _loadStudents();
+                          }
                         },
                         icon: Icon(Icons.chevron_left, color: Colors.blue[700]),
                         style: IconButton.styleFrom(
@@ -1129,10 +1336,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Previous day button (moved to right)
                       IconButton(
                         onPressed: () {
-                          setState(() {
-                            selectedDate = selectedDate.subtract(const Duration(days: 1));
-                          });
-                          _loadStudents();
+                          final now = DateTime.now();
+                          final oneYearAgo = now.subtract(const Duration(days: 365));
+                          final previousDay = selectedDate.subtract(const Duration(days: 1));
+                          
+                          // Check if previous day is within limits
+                          if (previousDay.isAfter(oneYearAgo) || previousDay.isAtSameMomentAs(oneYearAgo)) {
+                            setState(() {
+                              selectedDate = previousDay;
+                            });
+                            _loadStudents();
+                          }
                         },
                         icon: Icon(Icons.chevron_right, color: Colors.blue[700]),
                         style: IconButton.styleFrom(
@@ -1153,7 +1367,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.all(16),
                     color: Colors.grey[50],
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
                           'انتخاب کلاس:',
@@ -1162,59 +1376,64 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontWeight: FontWeight.bold,
                             color: Colors.grey[700],
                           ),
+                          textAlign: TextAlign.right,
                         ),
                         const SizedBox(height: 8),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              // All students option
-                              GestureDetector(
-                                onTap: () => _selectClass(null),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: selectedClass == null ? Colors.blue[700] : Colors.grey[200],
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: selectedClass == null ? Colors.blue[700]! : Colors.grey[400]!,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'همه دانش‌آموزان',
-                                    style: TextStyle(
-                                      color: selectedClass == null ? Colors.white : Colors.grey[600],
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              // Class options
-                              ...classes.map((classModel) => Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: GestureDetector(
-                                  onTap: () => _selectClass(classModel),
+                        Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                // All students option
+                                GestureDetector(
+                                  onTap: () => _selectClass(null),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                     decoration: BoxDecoration(
-                                      color: selectedClass?.id == classModel.id ? Colors.blue[700] : Colors.grey[200],
+                                      color: selectedClass == null ? Colors.blue[700] : Colors.grey[200],
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: selectedClass?.id == classModel.id ? Colors.blue[700]! : Colors.grey[400]!,
+                                        color: selectedClass == null ? Colors.blue[700]! : Colors.grey[400]!,
                                       ),
                                     ),
                                     child: Text(
-                                      classModel.name,
+                                      'همه دانش‌آموزان',
                                       style: TextStyle(
-                                        color: selectedClass?.id == classModel.id ? Colors.white : Colors.grey[600],
+                                        color: selectedClass == null ? Colors.white : Colors.grey[600],
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
                                 ),
-                              )).toList(),
-                            ],
+                                const SizedBox(width: 8),
+                                // Class options - reversed order for RTL
+                                ...classes.reversed.map((classModel) => Padding(
+                                  padding: const EdgeInsets.only(left: 8),
+                                  child: GestureDetector(
+                                    onTap: () => _selectClass(classModel),
+                                    onLongPress: () => _showClassContextMenu(classModel),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: selectedClass?.id == classModel.id ? Colors.blue[700] : Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: selectedClass?.id == classModel.id ? Colors.blue[700]! : Colors.grey[400]!,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        classModel.name,
+                                        style: TextStyle(
+                                          color: selectedClass?.id == classModel.id ? Colors.white : Colors.grey[600],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )).toList(),
+                              ],
+                            ),
                           ),
                         ),
                       ],

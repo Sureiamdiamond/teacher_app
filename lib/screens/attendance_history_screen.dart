@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import '../models/student.dart';
 import '../models/attendance_record.dart';
+import '../models/class_model.dart';
 import '../services/data_service.dart';
 
 class AttendanceHistoryScreen extends StatefulWidget {
@@ -21,6 +21,7 @@ class AttendanceHistoryScreen extends StatefulWidget {
 class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
   List<Student> students = [];
   List<AttendanceRecord> allRecords = [];
+  List<ClassModel> classes = [];
   DateTime selectedDate = DateTime.now();
   bool isLoading = true;
   bool showLatestStatus = true;
@@ -37,10 +38,12 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     
     final loadedStudents = await DataService.getStudents();
     final loadedRecords = await DataService.getAttendanceRecords();
+    final loadedClasses = await DataService.getClasses();
     
     setState(() {
       students = loadedStudents..sort((a, b) => a.studentNumber.compareTo(b.studentNumber));
       allRecords = loadedRecords;
+      classes = loadedClasses;
       isLoading = false;
     });
   }
@@ -93,6 +96,33 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       case AttendanceStatus.late:
         return 'تأخیر';
     }
+  }
+
+  String _getClassName(String? classId) {
+    if (classId == null) return 'بدون کلاس';
+    try {
+      return classes.firstWhere((c) => c.id == classId).name;
+    } catch (e) {
+      return 'کلاس نامشخص';
+    }
+  }
+
+  String? _getMostCommonClass(List<AttendanceRecord> records) {
+    if (records.isEmpty) return null;
+    
+    final classCounts = <String, int>{};
+    for (final record in records) {
+      final student = students.firstWhere((s) => s.id == record.studentId);
+      if (student.classId != null) {
+        classCounts[student.classId!] = (classCounts[student.classId!] ?? 0) + 1;
+      }
+    }
+    
+    if (classCounts.isEmpty) return null;
+    
+    return classCounts.entries
+        .reduce((a, b) => a.value > b.value ? a : b)
+        .key;
   }
 
   List<AttendanceRecord> _getRecordsForDate(DateTime date) {
@@ -157,6 +187,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
           ),
         ),
         backgroundColor: Colors.blue[700],
+        foregroundColor: Colors.black,
         elevation: 0,
         actions: [
           PopupMenuButton<String>(
@@ -164,8 +195,6 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
             onSelected: (value) async {
               if (value == 'pdf') {
                 await _exportToPDF();
-              } else if (value == 'excel') {
-                await _exportToExcel();
               }
             },
             itemBuilder: (context) => [
@@ -176,16 +205,6 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                     Icon(Icons.picture_as_pdf, color: Colors.red),
                     SizedBox(width: 8),
                     Text('خروجی PDF'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'excel',
-                child: Row(
-                  children: [
-                    Icon(Icons.table_chart, color: Colors.green),
-                    SizedBox(width: 8),
-                    Text('خروجی Excel'),
                   ],
                 ),
               ),
@@ -331,9 +350,16 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                           children: [
                             IconButton(
                               onPressed: () {
-                                setState(() {
-                                  selectedDate = selectedDate.add(const Duration(days: 1));
-                                });
+                                final now = DateTime.now();
+                                final oneDayAhead = now.add(const Duration(days: 1));
+                                final nextDay = selectedDate.add(const Duration(days: 1));
+                                
+                                // Check if next day is within limits
+                                if (nextDay.isBefore(oneDayAhead) || nextDay.isAtSameMomentAs(oneDayAhead)) {
+                                  setState(() {
+                                    selectedDate = nextDay;
+                                  });
+                                }
                               },
                               icon: Icon(Icons.chevron_left, color: Colors.blue[700]),
                               style: IconButton.styleFrom(
@@ -377,9 +403,16 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                             const SizedBox(width: 8),
                             IconButton(
                               onPressed: () {
-                                setState(() {
-                                  selectedDate = selectedDate.subtract(const Duration(days: 1));
-                                });
+                                final now = DateTime.now();
+                                final oneYearAgo = now.subtract(const Duration(days: 365));
+                                final previousDay = selectedDate.subtract(const Duration(days: 1));
+                                
+                                // Check if previous day is within limits
+                                if (previousDay.isAfter(oneYearAgo) || previousDay.isAtSameMomentAs(oneYearAgo)) {
+                                  setState(() {
+                                    selectedDate = previousDay;
+                                  });
+                                }
                               },
                               icon: Icon(Icons.chevron_right, color: Colors.blue[700]),
                               style: IconButton.styleFrom(
@@ -544,11 +577,15 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
   }
 
   Future<void> _selectDate() async {
+    final now = DateTime.now();
+    final oneYearAgo = now.subtract(const Duration(days: 365));
+    final oneDayAhead = now.add(const Duration(days: 1));
+    
     final date = await showPersianDatePicker(
       context: context,
       initialDate: Jalali.fromDateTime(selectedDate),
-      firstDate: Jalali(1400),
-      lastDate: Jalali(1450),
+      firstDate: Jalali.fromDateTime(oneYearAgo),
+      lastDate: Jalali.fromDateTime(oneDayAhead),
       builder: (context, child) {
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -595,115 +632,149 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       final pdf = pw.Document();
       final persianFont = await _loadPersianFont();
       
-      // Add content to PDF with UTF-8 encoding
-      pdf.addPage(
-        pw.Page(
-          textDirection: pw.TextDirection.rtl,
-          pageFormat: PdfPageFormat.a4,
-          build: (pw.Context context) {
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Header(
-                  level: 0,
-                  child: pw.Text(
-                    'گزارش حضور و غیاب',
+      // Split data into pages (max 13 students per page)
+      const int studentsPerPage = 13;
+      final totalPages = (reportData.length / studentsPerPage).ceil();
+      
+      for (int pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        final startIndex = pageIndex * studentsPerPage;
+        final endIndex = (startIndex + studentsPerPage).clamp(0, reportData.length);
+        final pageData = reportData.sublist(startIndex, endIndex);
+        
+        pdf.addPage(
+          pw.Page(
+            textDirection: pw.TextDirection.rtl,
+            pageFormat: PdfPageFormat.a4,
+            build: (pw.Context context) {
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  // Header for each page
+                  pw.Header(
+                    level: 0,
+                    child: pw.Text(
+                      'گزارش حضور و غیاب',
+                      style: pw.TextStyle(
+                        fontSize: 24, 
+                        fontWeight: pw.FontWeight.bold,
+                        font: persianFont,
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(height: 20),
+                  pw.Text(
+                    'تاریخ: ${_getPersianDate(selectedDate)}',
                     style: pw.TextStyle(
-                      fontSize: 24, 
-                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 16,
                       font: persianFont,
                     ),
                   ),
-                ),
-                pw.SizedBox(height: 20),
-                pw.Text(
-                  'تاریخ: ${_getPersianDate(selectedDate)}',
-                  style: pw.TextStyle(
-                    fontSize: 16,
-                    font: pw.Font.helvetica(),
-                  ),
-                ),
-                pw.SizedBox(height: 20),
-                pw.Table(
-                  border: pw.TableBorder.all(),
-                  columnWidths: {
-                    0: const pw.FixedColumnWidth(50),
-                    1: const pw.FixedColumnWidth(100),
-                    2: const pw.FixedColumnWidth(100),
-                    3: const pw.FixedColumnWidth(80),
-                    4: const pw.FixedColumnWidth(80),
-                    5: const pw.FlexColumnWidth(),
-                  },
-                  children: [
-                    // Header row
-                    pw.TableRow(
-                      decoration: const pw.BoxDecoration(color: PdfColors.grey300),
-                      children: [
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('ترتیب', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('نام', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('نام خانوادگی', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('تاریخ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('وضعیت', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('یادداشت', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
-                        ),
-                      ],
+                  pw.SizedBox(height: 10),
+                  // Class name
+                  if (reportData.isNotEmpty) ...[
+                    pw.Text(
+                      'کلاس: ${_getClassName(_getMostCommonClass(reportData))}',
+                      style: pw.TextStyle(
+                        fontSize: 18,
+                        fontWeight: pw.FontWeight.bold,
+                        font: persianFont,
+                      ),
                     ),
-                    // Data rows
-                    ...reportData.map((record) {
-                      final student = students.firstWhere((s) => s.id == record.studentId);
-                      return pw.TableRow(
+                    pw.SizedBox(height: 10),
+                  ],
+                  // Page info
+                  if (totalPages > 1) ...[
+                    pw.Text(
+                      'صفحه ${pageIndex + 1} از $totalPages',
+                      style: pw.TextStyle(
+                        fontSize: 14,
+                        font: persianFont,
+                        color: PdfColors.grey600,
+                      ),
+                    ),
+                    pw.SizedBox(height: 10),
+                  ],
+                  pw.Table(
+                    border: pw.TableBorder.all(),
+                    columnWidths: {
+                      0: const pw.FlexColumnWidth(), // یادداشت - انعطاف‌پذیر
+                      1: const pw.FixedColumnWidth(60), // وضعیت - کمتر
+                      2: const pw.FixedColumnWidth(60), // تاریخ - کمتر
+                      3: const pw.FixedColumnWidth(100), // نام خانوادگی
+                      4: const pw.FixedColumnWidth(100), // نام
+                      5: const pw.FixedColumnWidth(45), // ترتیب - 5 پیکسل بیشتر
+                    },
+                    children: [
+                      // Header row - RTL order
+                      pw.TableRow(
+                        decoration: const pw.BoxDecoration(color: PdfColors.grey300),
                         children: [
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(student.studentNumber.toString(), style: pw.TextStyle(font: persianFont)),
+                            child: pw.Text('یادداشت', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(student.firstName, style: pw.TextStyle(font: persianFont)),
+                            child: pw.Text('وضعیت', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(student.lastName, style: pw.TextStyle(font: persianFont)),
+                            child: pw.Text('تاریخ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(_getPersianDate(record.date), style: pw.TextStyle(font: persianFont)),
+                            child: pw.Text('نام خانوادگی', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(_getStatusTextForExport(record.status), style: pw.TextStyle(font: persianFont)),
+                            child: pw.Text('نام', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(record.notes ?? '', style: pw.TextStyle(font: persianFont)),
+                            child: pw.Text('ترتیب', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                           ),
                         ],
-                      );
-                    }).toList(),
-                  ],
-                ),
-              ],
-            );
-          },
-        ),
-      );
+                      ),
+                      // Data rows for current page
+                      ...pageData.map((record) {
+                        final student = students.firstWhere((s) => s.id == record.studentId);
+                        return pw.TableRow(
+                          children: [
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Text(record.notes ?? '', style: pw.TextStyle(font: persianFont)),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Text(_getStatusText(record.status), style: pw.TextStyle(font: persianFont)),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Text(_getPersianDate(record.date), style: pw.TextStyle(font: persianFont)),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Text(student.lastName, style: pw.TextStyle(font: persianFont)),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Text(student.firstName, style: pw.TextStyle(font: persianFont)),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Text(student.studentNumber.toString(), style: pw.TextStyle(font: persianFont)),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      }
 
       // Save PDF
       final directory = await getApplicationDocumentsDirectory();
@@ -716,66 +787,6 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       _showMessage('فایل PDF با موفقیت ایجاد شد\nمسیر: ${file.path}');
     } catch (e) {
       _showMessage('خطا در ایجاد فایل PDF: $e');
-    }
-  }
-
-  Future<void> _exportToExcel() async {
-    try {
-      final reportData = _getReportData();
-      if (reportData.isEmpty) {
-        _showMessage('هیچ داده‌ای برای خروجی وجود ندارد');
-        return;
-      }
-
-      final excel = Excel.createExcel();
-      final sheet = excel['گزارش حضور و غیاب'];
-      
-      // Add headers
-      sheet.cell(CellIndex.indexByString('A1')).value = TextCellValue('ترتیب');
-      sheet.cell(CellIndex.indexByString('B1')).value = TextCellValue('نام');
-      sheet.cell(CellIndex.indexByString('C1')).value = TextCellValue('نام خانوادگی');
-      sheet.cell(CellIndex.indexByString('D1')).value = TextCellValue('تاریخ');
-      sheet.cell(CellIndex.indexByString('E1')).value = TextCellValue('وضعیت');
-      sheet.cell(CellIndex.indexByString('F1')).value = TextCellValue('یادداشت');
-
-      // Add data
-      for (int i = 0; i < reportData.length; i++) {
-        final record = reportData[i];
-        final student = students.firstWhere((s) => s.id == record.studentId);
-        final row = i + 2;
-        
-        sheet.cell(CellIndex.indexByString('A$row')).value = TextCellValue(student.studentNumber.toString());
-        sheet.cell(CellIndex.indexByString('B$row')).value = TextCellValue(student.firstName);
-        sheet.cell(CellIndex.indexByString('C$row')).value = TextCellValue(student.lastName);
-        sheet.cell(CellIndex.indexByString('D$row')).value = TextCellValue(_getPersianDate(record.date));
-        sheet.cell(CellIndex.indexByString('E$row')).value = TextCellValue(_getStatusTextForExport(record.status));
-        sheet.cell(CellIndex.indexByString('F$row')).value = TextCellValue(record.notes ?? '');
-      }
-
-      // Save Excel
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/attendance_report_${DateTime.now().millisecondsSinceEpoch}.xlsx');
-      final bytes = excel.encode();
-      await file.writeAsBytes(bytes!);
-      
-      // Open file
-      await OpenFile.open(file.path);
-      _showMessage('فایل Excel با موفقیت ایجاد شد\nمسیر: ${file.path}');
-    } catch (e) {
-      _showMessage('خطا در ایجاد فایل Excel: $e');
-    }
-  }
-
-  String _getStatusTextForExport(AttendanceStatus status) {
-    switch (status) {
-      case AttendanceStatus.present:
-        return 'حاضر';
-      case AttendanceStatus.absent:
-        return 'غایب';
-      case AttendanceStatus.excused:
-        return 'موجه';
-      case AttendanceStatus.late:
-        return 'تأخیر';
     }
   }
 
