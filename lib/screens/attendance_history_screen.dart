@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import '../models/student.dart';
 import '../models/attendance_record.dart';
@@ -573,6 +574,16 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     }
   }
 
+  Future<pw.Font> _loadPersianFont() async {
+    try {
+      final fontData = await rootBundle.load('assets/fonts/Vazir-Regular.ttf');
+      return pw.Font.ttf(fontData);
+    } catch (e) {
+      // Fallback to default font if Persian font is not available
+      return pw.Font.helvetica();
+    }
+  }
+
   Future<void> _exportToPDF() async {
     try {
       final reportData = _getReportData();
@@ -582,11 +593,13 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       }
 
       final pdf = pw.Document();
+      final persianFont = await _loadPersianFont();
       
-      // Add content to PDF
+      // Add content to PDF with UTF-8 encoding
       pdf.addPage(
         pw.Page(
           textDirection: pw.TextDirection.rtl,
+          pageFormat: PdfPageFormat.a4,
           build: (pw.Context context) {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -595,13 +608,20 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                   level: 0,
                   child: pw.Text(
                     'گزارش حضور و غیاب',
-                    style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                    style: pw.TextStyle(
+                      fontSize: 24, 
+                      fontWeight: pw.FontWeight.bold,
+                      font: persianFont,
+                    ),
                   ),
                 ),
                 pw.SizedBox(height: 20),
                 pw.Text(
                   'تاریخ: ${_getPersianDate(selectedDate)}',
-                  style: pw.TextStyle(fontSize: 16),
+                  style: pw.TextStyle(
+                    fontSize: 16,
+                    font: pw.Font.helvetica(),
+                  ),
                 ),
                 pw.SizedBox(height: 20),
                 pw.Table(
@@ -621,27 +641,27 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                       children: [
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('ترتیب', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          child: pw.Text('ترتیب', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('نام', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          child: pw.Text('نام', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('نام خانوادگی', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          child: pw.Text('نام خانوادگی', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('تاریخ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          child: pw.Text('تاریخ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('وضعیت', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          child: pw.Text('وضعیت', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('یادداشت', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          child: pw.Text('یادداشت', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: persianFont)),
                         ),
                       ],
                     ),
@@ -652,27 +672,27 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                         children: [
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(student.studentNumber.toString()),
+                            child: pw.Text(student.studentNumber.toString(), style: pw.TextStyle(font: persianFont)),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(student.firstName),
+                            child: pw.Text(student.firstName, style: pw.TextStyle(font: persianFont)),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(student.lastName),
+                            child: pw.Text(student.lastName, style: pw.TextStyle(font: persianFont)),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(_getPersianDate(record.date)),
+                            child: pw.Text(_getPersianDate(record.date), style: pw.TextStyle(font: persianFont)),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(_getStatusText(record.status)),
+                            child: pw.Text(_getStatusTextForExport(record.status), style: pw.TextStyle(font: persianFont)),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
-                            child: pw.Text(record.notes ?? ''),
+                            child: pw.Text(record.notes ?? '', style: pw.TextStyle(font: persianFont)),
                           ),
                         ],
                       );
@@ -688,11 +708,12 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       // Save PDF
       final directory = await getApplicationDocumentsDirectory();
       final file = File('${directory.path}/attendance_report_${DateTime.now().millisecondsSinceEpoch}.pdf');
-      await file.writeAsBytes(await pdf.save());
+      final pdfBytes = await pdf.save();
+      await file.writeAsBytes(pdfBytes, mode: FileMode.write);
       
       // Open file
       await OpenFile.open(file.path);
-      _showMessage('فایل PDF با موفقیت ایجاد شد');
+      _showMessage('فایل PDF با موفقیت ایجاد شد\nمسیر: ${file.path}');
     } catch (e) {
       _showMessage('خطا در ایجاد فایل PDF: $e');
     }
@@ -739,7 +760,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       
       // Open file
       await OpenFile.open(file.path);
-      _showMessage('فایل Excel با موفقیت ایجاد شد');
+      _showMessage('فایل Excel با موفقیت ایجاد شد\nمسیر: ${file.path}');
     } catch (e) {
       _showMessage('خطا در ایجاد فایل Excel: $e');
     }

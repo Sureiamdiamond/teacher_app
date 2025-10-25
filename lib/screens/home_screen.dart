@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import '../models/student.dart';
 import '../models/attendance_record.dart';
+import '../models/class_model.dart';
 import '../services/data_service.dart';
 import 'add_student_screen.dart';
 import 'attendance_screen.dart';
 import 'attendance_history_screen.dart';
 import 'edit_student_screen.dart';
+import 'class_management_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +19,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Student> students = [];
+  List<ClassModel> classes = [];
+  ClassModel? selectedClass;
   DateTime selectedDate = DateTime.now();
   bool isLoading = true;
   Map<String, AttendanceStatus> attendanceMap = {};
@@ -55,7 +59,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadStudents() async {
     setState(() => isLoading = true);
-    final loadedStudents = await DataService.getStudents();
+    
+    // Load classes first
+    final loadedClasses = await DataService.getClasses();
+    
+    // Load students based on selected class
+    List<Student> loadedStudents;
+    if (selectedClass != null) {
+      loadedStudents = await DataService.getStudentsByClass(selectedClass!.id);
+    } else {
+      loadedStudents = await DataService.getStudents();
+    }
     
     // Load attendance data for today
     final todayRecords = await DataService.getAttendanceForDate(selectedDate);
@@ -87,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     setState(() {
+      classes = loadedClasses;
       // Sort students by student number
       students = loadedStudents..sort((a, b) => a.studentNumber.compareTo(b.studentNumber));
       attendanceMap = todayAttendance;
@@ -128,6 +143,13 @@ class _HomeScreenState extends State<HomeScreen> {
       
       isLoading = false;
     });
+  }
+
+  Future<void> _selectClass(ClassModel? classModel) async {
+    setState(() {
+      selectedClass = classModel;
+    });
+    await _loadStudents();
   }
 
   Future<void> _selectDate() async {
@@ -933,7 +955,7 @@ class _HomeScreenState extends State<HomeScreen> {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const AddStudentScreen(),
+                  builder: (context) => AddStudentScreen(classId: selectedClass?.id),
                 ),
               );
               if (result == true) {
@@ -949,6 +971,14 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'گزینه‌های بیشتر',
             onSelected: (String value) async {
               switch (value) {
+                case 'classes':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ClassManagementScreen(),
+                    ),
+                  );
+                  break;
                 case 'report':
                   Navigator.push(
                     context,
@@ -970,6 +1000,17 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
             itemBuilder: (BuildContext context) => [
+              PopupMenuItem<String>(
+                value: 'classes',
+                enabled: true,
+                child: Row(
+                  children: [
+                    Icon(Icons.class_, color: Colors.green[700]),
+                    const SizedBox(width: 8),
+                    const Text('کلاس‌ها'),
+                  ],
+                ),
+              ),
               PopupMenuItem<String>(
                 value: 'report',
                 enabled: true,
@@ -1104,6 +1145,81 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+                
+                // Class selector
+                if (classes.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    color: Colors.grey[50],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'انتخاب کلاس:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              // All students option
+                              GestureDetector(
+                                onTap: () => _selectClass(null),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: selectedClass == null ? Colors.blue[700] : Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: selectedClass == null ? Colors.blue[700]! : Colors.grey[400]!,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'همه دانش‌آموزان',
+                                    style: TextStyle(
+                                      color: selectedClass == null ? Colors.white : Colors.grey[600],
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Class options
+                              ...classes.map((classModel) => Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: GestureDetector(
+                                  onTap: () => _selectClass(classModel),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: selectedClass?.id == classModel.id ? Colors.blue[700] : Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: selectedClass?.id == classModel.id ? Colors.blue[700]! : Colors.grey[400]!,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      classModel.name,
+                                      style: TextStyle(
+                                        color: selectedClass?.id == classModel.id ? Colors.white : Colors.grey[600],
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )).toList(),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 
                 // Go to today button (only show if not today)
                 if (!_isToday(selectedDate))

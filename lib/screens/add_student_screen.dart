@@ -4,7 +4,9 @@ import '../models/student.dart';
 import '../services/data_service.dart';
 
 class AddStudentScreen extends StatefulWidget {
-  const AddStudentScreen({super.key});
+  final String? classId;
+  
+  const AddStudentScreen({super.key, this.classId});
 
   @override
   State<AddStudentScreen> createState() => _AddStudentScreenState();
@@ -36,6 +38,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         studentNumber: _studentNumberController.text.trim(),
+        classId: widget.classId,
       );
 
       await DataService.addStudent(student);

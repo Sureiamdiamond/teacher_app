@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/student.dart';
 import '../models/attendance_record.dart';
+import '../models/class_model.dart';
 
 class DataService {
   static const String _studentsKey = 'students';
   static const String _attendanceKey = 'attendance';
+  static const String _classesKey = 'classes';
 
   // Student management
   static Future<List<Student>> getStudents() async {
@@ -113,5 +115,60 @@ class DataService {
     } catch (e) {
       return null;
     }
+  }
+
+  // Class management
+  static Future<List<ClassModel>> getClasses() async {
+    final prefs = await SharedPreferences.getInstance();
+    final classesJson = prefs.getStringList(_classesKey) ?? [];
+    return classesJson
+        .map((json) => ClassModel.fromJson(jsonDecode(json)))
+        .toList();
+  }
+
+  static Future<void> saveClasses(List<ClassModel> classes) async {
+    final prefs = await SharedPreferences.getInstance();
+    final classesJson = classes
+        .map((classModel) => jsonEncode(classModel.toJson()))
+        .toList();
+    await prefs.setStringList(_classesKey, classesJson);
+  }
+
+  static Future<void> addClass(ClassModel classModel) async {
+    final classes = await getClasses();
+    classes.add(classModel);
+    await saveClasses(classes);
+  }
+
+  static Future<void> updateClass(ClassModel classModel) async {
+    final classes = await getClasses();
+    final index = classes.indexWhere((c) => c.id == classModel.id);
+    if (index != -1) {
+      classes[index] = classModel;
+      await saveClasses(classes);
+    }
+  }
+
+  static Future<void> deleteClass(String classId) async {
+    final classes = await getClasses();
+    classes.removeWhere((c) => c.id == classId);
+    await saveClasses(classes);
+  }
+
+  static Future<void> deleteAllClasses() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_classesKey);
+  }
+
+  // Get students by class
+  static Future<List<Student>> getStudentsByClass(String classId) async {
+    final allStudents = await getStudents();
+    return allStudents.where((student) => student.classId == classId).toList();
+  }
+
+  // Get students without class
+  static Future<List<Student>> getStudentsWithoutClass() async {
+    final allStudents = await getStudents();
+    return allStudents.where((student) => student.classId == null).toList();
   }
 }

@@ -3,12 +3,14 @@ class Student {
   final String firstName;
   final String lastName;
   final String studentNumber;
+  final String? classId;
 
   Student({
     required this.id,
     required this.firstName,
     required this.lastName,
     required this.studentNumber,
+    this.classId,
   });
 
   String get fullName => '$firstName $lastName';
@@ -19,6 +21,7 @@ class Student {
       'firstName': firstName,
       'lastName': lastName,
       'studentNumber': studentNumber,
+      'classId': classId,
     };
   }
 
@@ -28,6 +31,7 @@ class Student {
       firstName: json['firstName'],
       lastName: json['lastName'],
       studentNumber: json['studentNumber'],
+      classId: json['classId'],
     );
   }
 
@@ -36,12 +40,14 @@ class Student {
     String? firstName,
     String? lastName,
     String? studentNumber,
+    String? classId,
   }) {
     return Student(
       id: id ?? this.id,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       studentNumber: studentNumber ?? this.studentNumber,
+      classId: classId ?? this.classId,
     );
   }
 }
