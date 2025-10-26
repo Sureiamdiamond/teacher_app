@@ -8,6 +8,7 @@ import 'add_student_screen.dart';
 import 'attendance_screen.dart';
 import 'attendance_history_screen.dart';
 import 'edit_student_screen.dart';
+import 'class_management_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1174,31 +1175,39 @@ class _HomeScreenState extends State<HomeScreen> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.white),
             tooltip: 'گزینه‌های بیشتر',
-            onSelected: (String value) async {
-              switch (value) {
-                case 'classes':
-                  await _showAddClassDialog();
-                  break;
-                case 'report':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AttendanceHistoryScreen(),
-                    ),
-                  );
-                  break;
-                case 'reset':
-                  if (attendanceMap.isNotEmpty) {
-                    _resetAllAttendance();
-                  }
-                  break;
-                case 'delete':
-                  if (students.isNotEmpty) {
-                    await _deleteAllStudents();
-                  }
-                  break;
-              }
-            },
+             onSelected: (String value) async {
+               switch (value) {
+                 case 'add_class':
+                   await _showAddClassDialog();
+                   break;
+                 case 'manage_classes':
+                   Navigator.push(
+                     context,
+                     MaterialPageRoute(
+                       builder: (context) => const ClassManagementScreen(),
+                     ),
+                   );
+                   break;
+                 case 'report':
+                   Navigator.push(
+                     context,
+                     MaterialPageRoute(
+                       builder: (context) => const AttendanceHistoryScreen(),
+                     ),
+                   );
+                   break;
+                 case 'reset':
+                   if (attendanceMap.isNotEmpty) {
+                     _resetAllAttendance();
+                   }
+                   break;
+                 case 'delete':
+                   if (students.isNotEmpty) {
+                     await _deleteAllStudents();
+                   }
+                   break;
+               }
+             },
             itemBuilder: (BuildContext context) => [
               PopupMenuItem<String>(
                 value: 'classes',

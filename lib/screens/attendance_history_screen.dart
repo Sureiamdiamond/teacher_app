@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
+import 'dart:convert';
 import '../models/student.dart';
 import '../models/attendance_record.dart';
 import '../models/class_model.dart';
@@ -96,6 +98,10 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       case AttendanceStatus.late:
         return 'تأخیر';
     }
+  }
+
+  String _getStatusTextForExport(AttendanceStatus status) {
+    return _getStatusText(status);
   }
 
   String _getClassName(String? classId) {
@@ -195,6 +201,10 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
             onSelected: (value) async {
               if (value == 'pdf') {
                 await _exportToPDF();
+              } else if (value == 'excel') {
+                await _exportToExcel();
+              } else if (value == 'text') {
+                await _exportToText();
               }
             },
             itemBuilder: (context) => [
@@ -205,6 +215,26 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                     Icon(Icons.picture_as_pdf, color: Colors.red),
                     SizedBox(width: 8),
                     Text('خروجی PDF'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'excel',
+                child: Row(
+                  children: [
+                    Icon(Icons.table_chart, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text('خروجی Excel'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'text',
+                child: Row(
+                  children: [
+                    Icon(Icons.text_snippet, color: Colors.blue),
+                    SizedBox(width: 8),
+                    Text('خروجی متنی'),
                   ],
                 ),
               ),
@@ -611,6 +641,45 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     }
   }
 
+  Future<Directory> _getDownloadDirectory() async {
+    if (Platform.isAndroid) {
+      // For Android, try to get the main Downloads directory
+      try {
+        // Try to access the main Downloads directory
+        final downloadPath = Directory('/storage/emulated/0/Download');
+        if (!await downloadPath.exists()) {
+          await downloadPath.create(recursive: true);
+        }
+        return downloadPath;
+      } catch (e) {
+        // Fallback to external storage directory
+        try {
+          final directory = await getExternalStorageDirectory();
+          if (directory != null) {
+            final fallbackPath = Directory('${directory.path}/Download');
+            if (!await fallbackPath.exists()) {
+              await fallbackPath.create(recursive: true);
+            }
+            return fallbackPath;
+          }
+        } catch (e) {
+          // Final fallback to application documents directory
+        }
+      }
+    }
+    
+    // Fallback to application documents directory
+    return await getApplicationDocumentsDirectory();
+  }
+
+  String _getPersianFileName() {
+    final now = DateTime.now();
+    final persianDate = _getPersianDate(now);
+    // Convert Persian date to a safe filename format
+    final safeDate = persianDate.replaceAll('/', '_').replaceAll(' ', '_');
+    return 'گزارش_گیری_$safeDate';
+  }
+
   Future<pw.Font> _loadPersianFont() async {
     try {
       final fontData = await rootBundle.load('assets/fonts/Vazir-Regular.ttf');
@@ -776,21 +845,125 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         );
       }
 
-      // Save PDF
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/attendance_report_${DateTime.now().millisecondsSinceEpoch}.pdf');
-      final pdfBytes = await pdf.save();
-      await file.writeAsBytes(pdfBytes, mode: FileMode.write);
-      
-      // Open file
-      await OpenFile.open(file.path);
-      _showMessage('فایل PDF با موفقیت ایجاد شد\nمسیر: ${file.path}');
-    } catch (e) {
-      _showMessage('خطا در ایجاد فایل PDF: $e');
-    }
+    // Save PDF
+    final directory = await _getDownloadDirectory();
+    final fileName = '${_getPersianFileName()}.pdf';
+    final file = File('${directory.path}/$fileName');
+    final pdfBytes = await pdf.save();
+    await file.writeAsBytes(pdfBytes, mode: FileMode.write);
+    
+    // Open file
+    await OpenFile.open(file.path);
+    _showMessage('فایل PDF با موفقیت ایجاد شد\nمسیر: ${file.path}');
+  } catch (e) {
+    _showMessage('خطا در ایجاد فایل PDF: $e');
   }
+}
 
-  void _showMessage(String message) {
+Future<void> _exportToExcel() async {
+  try {
+    final reportData = _getReportData();
+    if (reportData.isEmpty) {
+      _showMessage('هیچ داده‌ای برای خروجی وجود ندارد');
+      return;
+    }
+
+    final excel = Excel.createExcel();
+    final sheet = excel['گزارش حضور و غیاب'];
+    
+    // Add headers
+    sheet.cell(CellIndex.indexByString('A1')).value = TextCellValue('ترتیب');
+    sheet.cell(CellIndex.indexByString('B1')).value = TextCellValue('نام');
+    sheet.cell(CellIndex.indexByString('C1')).value = TextCellValue('نام خانوادگی');
+    sheet.cell(CellIndex.indexByString('D1')).value = TextCellValue('تاریخ');
+    sheet.cell(CellIndex.indexByString('E1')).value = TextCellValue('وضعیت');
+    sheet.cell(CellIndex.indexByString('F1')).value = TextCellValue('یادداشت');
+
+    // Add data
+    for (int i = 0; i < reportData.length; i++) {
+      final record = reportData[i];
+      final student = students.firstWhere((s) => s.id == record.studentId);
+      final row = i + 2;
+      
+      sheet.cell(CellIndex.indexByString('A$row')).value = TextCellValue(student.studentNumber.toString());
+      sheet.cell(CellIndex.indexByString('B$row')).value = TextCellValue(student.firstName);
+      sheet.cell(CellIndex.indexByString('C$row')).value = TextCellValue(student.lastName);
+      sheet.cell(CellIndex.indexByString('D$row')).value = TextCellValue(_getPersianDate(record.date));
+      sheet.cell(CellIndex.indexByString('E$row')).value = TextCellValue(_getStatusTextForExport(record.status));
+      sheet.cell(CellIndex.indexByString('F$row')).value = TextCellValue(record.notes ?? '');
+    }
+
+    // Save Excel
+    final directory = await _getDownloadDirectory();
+    final fileName = '${_getPersianFileName()}.xlsx';
+    final file = File('${directory.path}/$fileName');
+    final bytes = excel.encode();
+    await file.writeAsBytes(bytes!);
+    
+    await OpenFile.open(file.path);
+    _showMessage('فایل Excel با موفقیت ایجاد شد\nمسیر: ${file.path}');
+  } catch (e) {
+    _showMessage('خطا در ایجاد فایل Excel: $e');
+  }
+}
+
+Future<void> _exportToText() async {
+  try {
+    final reportData = _getReportData();
+    if (reportData.isEmpty) {
+      _showMessage('هیچ داده‌ای برای خروجی وجود ندارد');
+      return;
+    }
+
+    final StringBuffer content = StringBuffer();
+    
+    // Header
+    content.writeln('گزارش حضور و غیاب');
+    content.writeln('=' * 50);
+    content.writeln('تاریخ: ${_getPersianDate(selectedDate)}');
+    content.writeln('تعداد کل دانش‌آموزان: ${students.length}');
+    content.writeln('تعداد حضور: ${reportData.where((r) => r.status == AttendanceStatus.present).length}');
+    content.writeln('تعداد غیاب: ${reportData.where((r) => r.status == AttendanceStatus.absent).length}');
+    content.writeln('تعداد تأخیر: ${reportData.where((r) => r.status == AttendanceStatus.late).length}');
+    content.writeln('تعداد موجه: ${reportData.where((r) => r.status == AttendanceStatus.excused).length}');
+    content.writeln('');
+    content.writeln('جزئیات:');
+    content.writeln('-' * 80);
+    
+    // Table header
+    content.writeln('${'ترتیب'.padRight(8)} ${'نام'.padRight(15)} ${'نام خانوادگی'.padRight(15)} ${'تاریخ'.padRight(12)} ${'وضعیت'.padRight(10)} ${'یادداشت'}');
+    content.writeln('-' * 80);
+    
+    // Table data
+    for (final record in reportData) {
+      final student = students.firstWhere((s) => s.id == record.studentId);
+      content.writeln(
+        '${student.studentNumber.toString().padRight(8)} '
+        '${student.firstName.padRight(15)} '
+        '${student.lastName.padRight(15)} '
+        '${_getPersianDate(record.date).padRight(12)} '
+        '${_getStatusTextForExport(record.status).padRight(10)} '
+        '${record.notes ?? ''}'
+      );
+    }
+    
+    content.writeln('-' * 80);
+    content.writeln('تاریخ ایجاد گزارش: ${_getPersianDate(DateTime.now())}');
+
+    // Save text file
+    final directory = await _getDownloadDirectory();
+    final fileName = '${_getPersianFileName()}.txt';
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsString(content.toString(), encoding: utf8);
+    
+    await OpenFile.open(file.path);
+    _showMessage('فایل متنی با موفقیت ایجاد شد\nمسیر: ${file.path}');
+  } catch (e) {
+    _showMessage('خطا در ایجاد فایل متنی: $e');
+  }
+}
+
+void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
