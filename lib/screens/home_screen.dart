@@ -42,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   String sortBy = 'number'; // 'number', 'name', or 'firstName'
   bool isGridView = false; // false = list view, true = grid view
+  bool isDarkMode = false; // false = light mode, true = dark mode
 
   @override
   void initState() {
@@ -194,17 +195,17 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08),
             spreadRadius: 0,
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: isDarkMode ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.04),
             spreadRadius: 0,
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -237,9 +238,9 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: Colors.transparent,
             child: Text(
               student.studentNumber,
-              style: const TextStyle(
+              style:  TextStyle(
                 fontFamily: 'BYekan',
-                color: Colors.white,
+                color: isDarkMode ? Colors.grey[800] : Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -248,11 +249,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         title: Text(
               student.fullName,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'BYekan',
             fontWeight: FontWeight.w700,
             fontSize: 17,
-            color: Color(0xFF2D3748),
+            color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
             letterSpacing: 0.2,
           ),
         ),
@@ -365,16 +366,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                     : '${_getTextController(student)?.text.length ?? 0}/20',
                                 counterStyle: TextStyle(
                                   fontSize: 8,
-                                  color: Colors.grey[500],
+                                  color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
                                 ),
                                 labelStyle: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey[600],
+                                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                                   fontWeight: FontWeight.normal,
                                 ),
                                 hintStyle: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey[400],
+                                  color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 0,
@@ -534,17 +535,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08),
             spreadRadius: 0,
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: isDarkMode ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.04),
             spreadRadius: 0,
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -600,9 +601,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         backgroundColor: Colors.transparent,
                         child: Text(
                           student.studentNumber,
-                          style: const TextStyle(
+                          style:  TextStyle(
                             fontFamily: 'BYekan',
-                            color: Colors.white,
+                            color: isDarkMode ? Colors.grey[800] : Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
                           ),
@@ -646,10 +647,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 4),
                 Text(
                   student.fullName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'BYekan',
                     fontWeight: FontWeight.bold,
                     fontSize: 11,
+                    color: isDarkMode ? Colors.white : Colors.black,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -674,7 +676,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ) : null,
-                            color: isPresent ? null : Colors.green[50],
+                            color: isPresent ? null : (isDarkMode ? Colors.green[900] : Colors.green[50]),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: isPresent ? Colors.green : Colors.green[200]!,
@@ -709,7 +711,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ) : null,
-                            color: isAbsent ? null : Colors.red[50],
+                            color: isAbsent ? null : (isDarkMode ? Colors.red[900] : Colors.red[50]),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: isAbsent ? Colors.red : Colors.red[200]!,
@@ -748,7 +750,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ) : null,
-                            color: isExcused ? null : Colors.blue[50],
+                            color: isExcused ? null : (isDarkMode ? Colors.blue[900] : Colors.blue[50]),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: isExcused ? Colors.blue : Colors.blue[200]!,
@@ -783,7 +785,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ) : null,
-                            color: isLate ? null : Colors.orange[50],
+                            color: isLate ? null : (isDarkMode ? Colors.orange[900] : Colors.orange[50]),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: isLate ? Colors.orange : Colors.orange[200]!,
@@ -829,10 +831,10 @@ class _HomeScreenState extends State<HomeScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ) : null,
-          color: isSelected ? null : Colors.grey[50],
+          color: isSelected ? null : (isDarkMode ? Colors.grey[700] : Colors.grey[50]),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color : Colors.grey[200]!,
+            color: isSelected ? color : (isDarkMode ? Colors.grey[600]! : Colors.grey[200]!),
             width: 1.5,
           ),
           boxShadow: isSelected ? [
@@ -848,7 +850,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected ? Colors.white : (isDarkMode ? Colors.grey[300] : Colors.grey[600]),
               size: 16,
             ),
             const SizedBox(height: 2),
@@ -856,7 +858,7 @@ class _HomeScreenState extends State<HomeScreen> {
               statusText,
               style: TextStyle(
                 fontFamily: 'BYekan',
-                color: isSelected ? Colors.white : Colors.grey[700],
+                color: isSelected ? Colors.white : (isDarkMode ? Colors.grey[300] : Colors.grey[700]),
                 fontWeight: FontWeight.w600,
                 fontSize: 11,
                 letterSpacing: 0.1,
@@ -1063,9 +1065,9 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('حذف دانش‌آموز', style: TextStyle(color: Colors.black)),
-          content: Text('آیا مطمئن هستید که می‌خواهید ${student.fullName} را حذف کنید؟', style: const TextStyle(color: Colors.black)),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          title: Text('حذف دانش‌آموز', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
+          content: Text('آیا مطمئن هستید که می‌خواهید ${student.fullName} را حذف کنید؟', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -1094,9 +1096,9 @@ class _HomeScreenState extends State<HomeScreen> {
           SnackBar(
             content: Text(
               'دانش‌آموز ${deletedStudent.fullName} حذف شد',
-              style: const TextStyle(
+              style:  TextStyle(
                 fontFamily: 'BYekan',
-                color: Colors.white,
+                color: isDarkMode ? Colors.grey[800] : Colors.white,
               ),
             ),
             backgroundColor: Colors.red[600],
@@ -1207,9 +1209,9 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('تأیید حذف', style: TextStyle(color: Colors.black)),
-          content: const Text('آیا مطمئن هستید که می‌خواهید تمام دانش‌آموزان را حذف کنید؟\nاین عمل قابل بازگشت نیست.', style: TextStyle(color: Colors.black)),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          title: Text('تأیید حذف', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
+          content: Text('آیا مطمئن هستید که می‌خواهید تمام دانش‌آموزان را حذف کنید؟\nاین عمل قابل بازگشت نیست.', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -1247,9 +1249,9 @@ class _HomeScreenState extends State<HomeScreen> {
           SnackBar(
             content: Text(
               'تمام دانش‌آموزان حذف شدند (${deletedStudents.length} نفر)',
-              style: const TextStyle(
+              style:  TextStyle(
                 fontFamily: 'BYekan',
-                color: Colors.white,
+                color: isDarkMode ? Colors.grey[800] : Colors.white,
               ),
             ),
             backgroundColor: Colors.red[600],
@@ -1278,8 +1280,8 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('اضافه کردن کلاس جدید', style: TextStyle(color: Colors.black)),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          title: Text('اضافه کردن کلاس جدید', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1350,14 +1352,14 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.edit, color: Colors.blue),
-              title: const Text('ویرایش کلاس', style: TextStyle(color: Colors.black)),
+              title: Text('ویرایش کلاس', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
               onTap: () {
                 Navigator.pop(context, 'edit');
               },
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('حذف کلاس', style: TextStyle(color: Colors.black)),
+              title: Text('حذف کلاس', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
               onTap: () {
                 Navigator.pop(context, 'delete');
               },
@@ -1387,8 +1389,8 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('ویرایش کلاس', style: TextStyle(color: Colors.black)),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          title: Text('ویرایش کلاس', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1445,8 +1447,8 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('حذف کلاس', style: TextStyle(color: Colors.black)),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          title: Text('حذف کلاس', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
           content: Text('آیا از حذف کلاس "${classModel.name}" اطمینان دارید؟\nتمام دانش‌آموزان این کلاس نیز حذف خواهند شد.', style: const TextStyle(color: Colors.black)),
         actions: [
           TextButton(
@@ -1538,19 +1540,33 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
+        title:  Text(
           'حضور و غیاب دانش‌آموزان',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: isDarkMode ? Colors.grey[800] : Colors.white,
             fontSize: 20
           ),
         ),
-        backgroundColor: Colors.blue[700],
+        backgroundColor: isDarkMode ? Colors.blue[900] : Colors.blue[700],
         elevation: 0,
+        leading:  IconButton(
+          icon: Icon(
+            isDarkMode ? Icons.light_mode : Icons.dark_mode,
+            color: isDarkMode ? Colors.grey[800] : Colors.white,
+          ),
+          onPressed: () {
+            setState(() {
+              isDarkMode = !isDarkMode;
+            });
+          },
+          tooltip: isDarkMode ? 'حالت روشن' : 'حالت تاریک',
+        ),
         actions: [
+          // Theme toggle button
+
           // Add student button
           IconButton(
             onPressed: () async {
@@ -1775,7 +1791,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'انتخاب کلاس:',
+                          'انتخاب کلاس',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -1858,12 +1874,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         _loadStudents();
                       },
                       icon: const Icon(Icons.today, color: Colors.white),
-                      label: const Text(
+                      label:  Text(
                         'برو به امروز',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: isDarkMode ? Colors.grey[800] : Colors.white,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -1917,7 +1933,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   child: Icon(
                                     Icons.list,
-                                    color: !isGridView ? Colors.white : Colors.grey[600],
+                                    color: !isGridView ? Colors.white : (isDarkMode ? Colors.grey[400] : Colors.grey[600]),
                                     size: 20,
                                   ),
                                 ),
@@ -1941,7 +1957,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   child: Icon(
                                     Icons.grid_view,
-                                    color: isGridView ? Colors.white : Colors.grey[600],
+                                    color: isGridView ? Colors.white : (isDarkMode ? Colors.grey[400] : Colors.grey[600]),
                                     size: 20,
                                   ),
                                 ),
@@ -1986,7 +2002,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                            value == 'number' ? 'شماره' :
                                            value == 'name' ? 'فامیلی' : 'نام',
                                            style: TextStyle(
-                                             color: Colors.blue[700],
+                                             color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
                                              fontWeight: FontWeight.bold,
                                              fontSize: 13,
                                            ),
@@ -2018,11 +2034,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 },
                                 decoration: InputDecoration(
                                   hintText: 'جستجو در نام دانش اموزان',
-                                  hintStyle: TextStyle(color: Colors.grey[400]),
-                                  prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                                  hintStyle: TextStyle(color: isDarkMode ? Colors.grey[500] : Colors.grey[400]),
+                                  prefixIcon: Icon(Icons.search, color: isDarkMode ? Colors.grey[400] : Colors.grey[600]),
                                   suffixIcon: _searchQuery.isNotEmpty
                                       ? IconButton(
-                                    icon: Icon(Icons.clear, color: Colors.grey[600]),
+                                    icon: Icon(Icons.clear, color: isDarkMode ? Colors.grey[400] : Colors.grey[600]),
                                     onPressed: () {
                                       _searchController.clear();
                                       setState(() {
@@ -2071,14 +2087,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               Icon(
                                 Icons.school,
                                 size: 64,
-                                color: Colors.grey[400],
+                                color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 'هیچ دانش‌آموزی ثبت نشده است',
                                 style: TextStyle(
                                   fontSize: 18,
-                                  color: Colors.grey[600],
+                                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -2086,7 +2102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 'برای شروع، دانش‌آموز جدید اضافه کنید',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey[500],
+                                  color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
                                 ),
                               ),
                             ],
@@ -2100,14 +2116,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Icon(
                                     Icons.search_off,
                                     size: 64,
-                                    color: Colors.grey[400],
+                                    color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
                                     'هیچ دانش‌آموزی با این نام یافت نشد',
                                     style: TextStyle(
                                       fontSize: 16,
-                                      color: Colors.grey[600],
+                                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                                     ),
                                   ),
                                 ],
@@ -2183,7 +2199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: _canSaveAttendance() ? Colors.white : Colors.grey,
+                              color: _canSaveAttendance() ? Colors.white : (isDarkMode ? Colors.grey[400] : Colors.grey),
                             ),
                           ),
                         ],
@@ -2197,16 +2213,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ElevatedButton.icon(
                       onPressed: null, // Disabled button
                       icon: const Icon(Icons.checklist, color: Colors.grey),
-                      label: const Text(
+                      label:  Text(
                         'ابتدا دانش‌آموز اضافه کنید',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                          color: isDarkMode ? Colors.grey[400] : Colors.grey,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
+                        backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[300],
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
