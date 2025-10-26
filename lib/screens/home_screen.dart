@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import '../models/student.dart';
@@ -40,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String sortBy = 'number'; // 'number', 'name', or 'firstName'
+  bool isGridView = false; // false = list view, true = grid view
 
   @override
   void initState() {
@@ -190,39 +192,68 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildStudentCard(Student student) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 1),
+            color: Colors.black.withOpacity(0.08),
+            spreadRadius: 0,
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: Colors.blue[100],
-          child: Text(
-                student.studentNumber,
-            style: TextStyle(
-              color: Colors.blue[700],
-              fontWeight: FontWeight.bold,
-                  fontSize: 12,
+        child: Column(
+          children: [
+            ListTile(
+        contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        leading: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [Colors.blue[400]!, Colors.blue[600]!],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withOpacity(0.3),
+                spreadRadius: 0,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: 24,
+            backgroundColor: Colors.transparent,
+            child: Text(
+              student.studentNumber,
+              style: const TextStyle(
+                fontFamily: 'BYekan',
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
           ),
         ),
         title: Text(
               student.fullName,
           style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
+            fontFamily: 'BYekan',
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+            color: Color(0xFF2D3748),
+            letterSpacing: 0.2,
           ),
         ),
         trailing: PopupMenuButton<String>(
@@ -259,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           // Attendance buttons - four buttons in one row
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Column(
               children: [
                 Row(
@@ -495,6 +526,296 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildGridStudentCard(Student student) {
+    final isPresent = _isStatusSelected(student, 'حاضر');
+    final isAbsent = _isStatusSelected(student, 'غایب');
+    final isExcused = _isStatusSelected(student, 'موجه');
+    final isLate = _isStatusSelected(student, 'تأخیر');
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            spreadRadius: 0,
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Student info section
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: isPresent
+                              ? [Colors.green[400]!, Colors.green[600]!]
+                              : isAbsent
+                                  ? [Colors.red[400]!, Colors.red[600]!]
+                                  : isExcused
+                                      ? [Colors.blue[400]!, Colors.blue[600]!]
+                                      : isLate
+                                          ? [Colors.orange[400]!, Colors.orange[600]!]
+                                          : [Colors.grey[400]!, Colors.grey[600]!],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isPresent
+                                ? Colors.green
+                                : isAbsent
+                                    ? Colors.red
+                                    : isExcused
+                                        ? Colors.blue
+                                        : isLate
+                                            ? Colors.orange
+                                            : Colors.grey).withOpacity(0.3),
+                            spreadRadius: 0,
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.transparent,
+                        child: Text(
+                          student.studentNumber,
+                          style: const TextStyle(
+                            fontFamily: 'BYekan',
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, size: 14),
+                      onSelected: (value) async {
+                        if (value == 'edit') {
+                          await _editStudent(student);
+                        } else if (value == 'delete') {
+                          await _deleteStudent(student);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit, color: Colors.blue, size: 14),
+                              SizedBox(width: 6),
+                              Text('ویرایش', style: TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, color: Colors.red, size: 14),
+                              SizedBox(width: 6),
+                              Text('حذف', style: TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  student.fullName,
+                  style: const TextStyle(
+                    fontFamily: 'BYekan',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            
+            // Attendance buttons section
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _markAttendance(student, 'حاضر', Colors.green),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: isPresent ? LinearGradient(
+                              colors: [Colors.green[400]!, Colors.green[600]!],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ) : null,
+                            color: isPresent ? null : Colors.green[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isPresent ? Colors.green : Colors.green[200]!,
+                              width: 1.5,
+                            ),
+                            boxShadow: isPresent ? [
+                              BoxShadow(
+                                color: Colors.green.withOpacity(0.3),
+                                spreadRadius: 0,
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ] : null,
+                          ),
+                          child: Icon(
+                            Icons.check,
+                            color: isPresent ? Colors.white : Colors.green[700],
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _markAttendance(student, 'غایب', Colors.red),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: isAbsent ? LinearGradient(
+                              colors: [Colors.red[400]!, Colors.red[600]!],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ) : null,
+                            color: isAbsent ? null : Colors.red[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isAbsent ? Colors.red : Colors.red[200]!,
+                              width: 1.5,
+                            ),
+                            boxShadow: isAbsent ? [
+                              BoxShadow(
+                                color: Colors.red.withOpacity(0.3),
+                                spreadRadius: 0,
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ] : null,
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            color: isAbsent ? Colors.white : Colors.red[700],
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _markAttendance(student, 'موجه', Colors.blue),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: isExcused ? LinearGradient(
+                              colors: [Colors.blue[400]!, Colors.blue[600]!],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ) : null,
+                            color: isExcused ? null : Colors.blue[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isExcused ? Colors.blue : Colors.blue[200]!,
+                              width: 1.5,
+                            ),
+                            boxShadow: isExcused ? [
+                              BoxShadow(
+                                color: Colors.blue.withOpacity(0.3),
+                                spreadRadius: 0,
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ] : null,
+                          ),
+                          child: Icon(
+                            Icons.info_outline,
+                            color: isExcused ? Colors.white : Colors.blue[700],
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _markAttendance(student, 'تأخیر', Colors.orange),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: isLate ? LinearGradient(
+                              colors: [Colors.orange[400]!, Colors.orange[600]!],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ) : null,
+                            color: isLate ? null : Colors.orange[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isLate ? Colors.orange : Colors.orange[200]!,
+                              width: 1.5,
+                            ),
+                            boxShadow: isLate ? [
+                              BoxShadow(
+                                color: Colors.orange.withOpacity(0.3),
+                                spreadRadius: 0,
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ] : null,
+                          ),
+                          child: Icon(
+                            Icons.schedule,
+                            color: isLate ? Colors.white : Colors.orange[700],
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAttendanceButton(Student student, String statusText, Color color, IconData icon) {
     final isSelected = _isStatusSelected(student, statusText);
     
@@ -503,12 +824,25 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color : Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
+          gradient: isSelected ? LinearGradient(
+            colors: [color, color.withOpacity(0.8)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ) : null,
+          color: isSelected ? null : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color : Colors.grey[300]!,
-            width: 2,
+            color: isSelected ? color : Colors.grey[200]!,
+            width: 1.5,
           ),
+          boxShadow: isSelected ? [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              spreadRadius: 0,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ] : null,
         ),
         child: Column(
           children: [
@@ -521,9 +855,11 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               statusText,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[600],
-                fontWeight: FontWeight.bold,
-                fontSize: 10,
+                fontFamily: 'BYekan',
+                color: isSelected ? Colors.white : Colors.grey[700],
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+                letterSpacing: 0.1,
               ),
               textAlign: TextAlign.center,
             ),
@@ -724,26 +1060,49 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _deleteStudent(Student student) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('حذف دانش‌آموز'),
-        content: Text('آیا مطمئن هستید که می‌خواهید ${student.fullName} را حذف کنید؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('لغو'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('حذف', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('حذف دانش‌آموز', style: TextStyle(color: Colors.black)),
+          content: Text('آیا مطمئن هستید که می‌خواهید ${student.fullName} را حذف کنید؟', style: const TextStyle(color: Colors.black)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('لغو'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('حذف', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
       ),
     );
 
     if (confirmed == true) {
       try {
-      await DataService.deleteStudent(student.id);
-      _loadStudents();
+        // Store student data for potential undo
+        final deletedStudent = student;
+        
+        // Delete the student
+        await DataService.deleteStudent(student.id);
+        _loadStudents();
+        
+        // Show simple deletion message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'دانش‌آموز ${deletedStudent.fullName} حذف شد',
+              style: const TextStyle(
+                fontFamily: 'BYekan',
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.red[600],
+            duration: const Duration(seconds: 5),
+          ),
+        );
       } catch (e) {
         // Handle error silently
       }
@@ -828,12 +1187,12 @@ class _HomeScreenState extends State<HomeScreen> {
       // Clear all attendance statuses
       attendanceMap.clear();
       notesMap.clear();
-      
+
       // Clear all text controllers
       for (final controller in textControllers.values) {
         controller.clear();
       }
-      
+
       // Reset editing state for all students
       for (final student in students) {
         isEditingNotes[student.id] = true;
@@ -845,9 +1204,12 @@ class _HomeScreenState extends State<HomeScreen> {
     // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('تأیید حذف'),
-        content: const Text('آیا مطمئن هستید که می‌خواهید تمام دانش‌آموزان را حذف کنید؟\nاین عمل قابل بازگشت نیست.'),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('تأیید حذف', style: TextStyle(color: Colors.black)),
+          content: const Text('آیا مطمئن هستید که می‌خواهید تمام دانش‌آموزان را حذف کنید؟\nاین عمل قابل بازگشت نیست.', style: TextStyle(color: Colors.black)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -859,10 +1221,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    ),
     );
 
     if (confirmed == true) {
       try {
+        // Store all students data for potential undo
+        final deletedStudents = List<Student>.from(students);
+
+        // Delete all students
         await DataService.deleteAllStudents();
         setState(() {
           students.clear();
@@ -874,6 +1241,21 @@ class _HomeScreenState extends State<HomeScreen> {
           textControllers.clear();
           isEditingNotes.clear();
         });
+
+        // Show simple deletion message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'تمام دانش‌آموزان حذف شدند (${deletedStudents.length} نفر)',
+              style: const TextStyle(
+                fontFamily: 'BYekan',
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.red[600],
+            duration: const Duration(seconds: 5),
+          ),
+        );
       } catch (e) {
         // Handle error silently
       }
@@ -891,9 +1273,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final TextEditingController classNameController = TextEditingController();
     
     final result = await showDialog<bool>(
+
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('اضافه کردن کلاس جدید'),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('اضافه کردن کلاس جدید', style: TextStyle(color: Colors.black)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -912,7 +1298,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('لغو'),
+            child: const Text('لغو', style: TextStyle(color: Colors.red)),
           ),
           TextButton(
             onPressed: () {
@@ -924,6 +1310,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    ),
     );
 
     if (result == true && classNameController.text.trim().isNotEmpty) {
@@ -963,14 +1350,14 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.edit, color: Colors.blue),
-              title: const Text('ویرایش کلاس'),
+              title: const Text('ویرایش کلاس', style: TextStyle(color: Colors.black)),
               onTap: () {
                 Navigator.pop(context, 'edit');
               },
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('حذف کلاس'),
+              title: const Text('حذف کلاس', style: TextStyle(color: Colors.black)),
               onTap: () {
                 Navigator.pop(context, 'delete');
               },
@@ -978,7 +1365,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('لغو'),
+              child: const Text('لغو', style: TextStyle(color: Colors.red)),
             ),
           ],
         ),
@@ -997,8 +1384,11 @@ class _HomeScreenState extends State<HomeScreen> {
     
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('ویرایش کلاس'),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('ویرایش کلاس', style: TextStyle(color: Colors.black)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1029,6 +1419,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    ),
     );
 
     if (result == true && classNameController.text.trim().isNotEmpty) {
@@ -1051,9 +1442,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _deleteClass(ClassModel classModel) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('حذف کلاس'),
-        content: Text('آیا از حذف کلاس "${classModel.name}" اطمینان دارید؟\nتمام دانش‌آموزان این کلاس نیز حذف خواهند شد.'),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('حذف کلاس', style: TextStyle(color: Colors.black)),
+          content: Text('آیا از حذف کلاس "${classModel.name}" اطمینان دارید؟\nتمام دانش‌آموزان این کلاس نیز حذف خواهند شد.', style: const TextStyle(color: Colors.black)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -1065,6 +1459,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    ),
     );
 
     if (confirmed == true) {
@@ -1150,6 +1545,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            fontSize: 20
           ),
         ),
         backgroundColor: Colors.blue[700],
@@ -1210,7 +1606,7 @@ class _HomeScreenState extends State<HomeScreen> {
              },
             itemBuilder: (BuildContext context) => [
               PopupMenuItem<String>(
-                value: 'classes',
+                value: 'add_class',
                 enabled: true,
                 child: Row(
                   children: [
@@ -1485,18 +1881,84 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Search field and Sort options
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
                     child: Row(
                       children: [
-                          Column(
+
+
+
+
+                        // View mode toggle button
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    isGridView = false;
+                                  });
+                                },
+                                child: Container(
+                                  height: 39,
+                                  width: 36,
+
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: !isGridView ? Colors.blue : Colors.transparent,
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(4),
+                                      bottomLeft: Radius.circular(4),
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.list,
+                                    color: !isGridView ? Colors.white : Colors.grey[600],
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    isGridView = true;
+                                  });
+                                },
+                                child: Container(
+                                  height: 38,
+                                  width: 35,
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: isGridView ? Colors.blue : Colors.transparent,
+                                    borderRadius: const BorderRadius.only(
+                                      topRight: Radius.circular(4),
+                                      bottomRight: Radius.circular(4),
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.grid_view,
+                                    color: isGridView ? Colors.white : Colors.grey[600],
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Column(
                           children: [
                             // Filter icon button
                             Container(
-                              width: 110,
-                              height: 45,
+                              height: 41,
+                              width: 80,
                               decoration: BoxDecoration(
                                 color: Colors.blue[50],
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(7),
                                 border: Border.all(color: Colors.blue[700]!),
                               ),
                               child: DropdownButtonHideUnderline(
@@ -1509,19 +1971,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                       sortBy = newValue!;
                                     });
                                   },
-                                  hint: Icon(Icons.filter_list, color: Colors.blue[700], size: 20),
+                                  hint: Icon(
+                                    sortBy == 'number' ? Icons.numbers :
+                                    sortBy == 'name' ? Icons.sort_by_alpha : Icons.person,
+                                    color: Colors.blue[700], 
+                                    size: 20
+                                  ),
                                   icon: Icon(Icons.keyboard_arrow_down, color: Colors.blue[700]),
                                    items: <String>['number', 'name', 'firstName'].map<DropdownMenuItem<String>>((String value) {
                                      return DropdownMenuItem<String>(
                                        value: value,
                                        child: Center(
                                          child: Text(
-                                           value == 'number' ? 'شماره' : 
-                                           value == 'name' ? 'نام خانوادگی' : 'نام',
+                                           value == 'number' ? 'شماره' :
+                                           value == 'name' ? 'فامیلی' : 'نام',
                                            style: TextStyle(
                                              color: Colors.blue[700],
                                              fontWeight: FontWeight.bold,
-                                             fontSize: 12,
+                                             fontSize: 13,
                                            ),
                                            textAlign: TextAlign.center,
                                          ),
@@ -1530,60 +1997,64 @@ class _HomeScreenState extends State<HomeScreen> {
                                    }).toList(),
                                 ),
                               ),
-                             ),
+                            ),
                           ],
                         ),
-                           const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         // Search field
                         Expanded(
                           child: Directionality(
                             textDirection: TextDirection.rtl,
-                            child: TextField(
-                              controller: _searchController,
-                              textDirection: TextDirection.rtl,
-                              textAlign: TextAlign.right,
-                              onChanged: (value) {
-                                setState(() {
-                                  _searchQuery = value;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'جستجو در نام دانش‌آموزان...',
-                                hintStyle: TextStyle(color: Colors.grey[400]),
-                                prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-                                suffixIcon: _searchQuery.isNotEmpty
-                                    ? IconButton(
-                                        icon: Icon(Icons.clear, color: Colors.grey[600]),
-                                        onPressed: () {
-                                          _searchController.clear();
-                                          setState(() {
-                                            _searchQuery = '';
-                                          });
-                                        },
-                                      )
-                                    : null,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.blue[600]!),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey[50],
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
+                            child: SizedBox(
+                              height: 42,
+                              child: TextField(
+                                controller: _searchController,
+                                textDirection: TextDirection.rtl,
+                                textAlign: TextAlign.right,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _searchQuery = value;
+                                  });
+                                },
+                                decoration: InputDecoration(
+                                  hintText: 'جستجو در نام دانش اموزان',
+                                  hintStyle: TextStyle(color: Colors.grey[400]),
+                                  prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                                  suffixIcon: _searchQuery.isNotEmpty
+                                      ? IconButton(
+                                    icon: Icon(Icons.clear, color: Colors.grey[600]),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() {
+                                        _searchQuery = '';
+                                      });
+                                    },
+                                  )
+                                      : null,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(color: Colors.blue[600]!),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.grey[50],
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 15,
+                                    vertical: 12,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
+
                      
                         // Sort options
                        ],
@@ -1642,14 +2113,29 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                             )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _getFilteredStudents().length,
-                              itemBuilder: (context, index) {
-                                final student = _getFilteredStudents()[index];
-                                return _buildStudentCard(student);
-                              },
-                            ),
+                          : isGridView
+                              ? GridView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    childAspectRatio: 0.8,
+                                    crossAxisSpacing: 8,
+                                    mainAxisSpacing: 8,
+                                  ),
+                                  itemCount: _getFilteredStudents().length,
+                                  itemBuilder: (context, index) {
+                                    final student = _getFilteredStudents()[index];
+                                    return _buildGridStudentCard(student);
+                                  },
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: _getFilteredStudents().length,
+                                  itemBuilder: (context, index) {
+                                    final student = _getFilteredStudents()[index];
+                                    return _buildStudentCard(student);
+                                  },
+                                ),
                 ),
                 
                 // Take attendance button
@@ -1665,6 +2151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             builder: (context) => AttendanceScreen(
                               students: students,
                               selectedDate: selectedDate,
+                              isResultMode: true,
                             ),
                           ),
                         );
@@ -1727,6 +2214,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
+
+                SizedBox(height: 8)
               ],
             ),
     );

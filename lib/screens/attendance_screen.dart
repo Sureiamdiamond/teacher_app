@@ -7,11 +7,13 @@ import '../services/data_service.dart';
 class AttendanceScreen extends StatefulWidget {
   final List<Student> students;
   final DateTime selectedDate;
+  final bool isResultMode;
 
   const AttendanceScreen({
     super.key,
     required this.students,
     required this.selectedDate,
+    this.isResultMode = false,
   });
 
   @override
@@ -56,7 +58,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       'مرداد', 'شهریور', 'مهر', 'آبان',
       'آذر', 'دی', 'بهمن', 'اسفند'
     ];
-    return '${jalali.day} ${months[jalali.month - 1]} ${jalali.year}';
+    return '${jalali.day} ${months[jalali.month - 1]}';
   }
 
   Color _getStatusColor(AttendanceStatus status) {
@@ -131,9 +133,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+          },
+        ),
         title: const Text(
-          'ثبت حضور و غیاب',
+          'نتیجه حضور و غیاب',
           style: TextStyle(
+            fontFamily: 'BYekan',
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -144,12 +154,25 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           if (!isLoading)
             TextButton(
               onPressed: _saveAttendance,
-              child: const Text(
-                'ذخیره',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.save,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'ذخیره',
+                    style: TextStyle(
+                      fontFamily: 'BYekan',
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
               ),
             ),
         ],
@@ -161,40 +184,63 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 // Date header
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(20),
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    gradient: LinearGradient(
+                      colors: [Colors.blue[50]!, Colors.white],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.1),
-                        spreadRadius: 1,
-                        blurRadius: 3,
-                        offset: const Offset(0, 1),
+                        color: Colors.blue.withOpacity(0.1),
+                        spreadRadius: 0,
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 32,
-                        color: Colors.blue[600],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _getPersianDate(widget.selectedDate),
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[100],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.calendar_today,
+                          size: 28,
                           color: Colors.blue[700],
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 16),
                       Text(
-                        'تعداد دانش‌آموزان: ${widget.students.length}',
+                        _getPersianDate(widget.selectedDate),
                         style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
+                          fontFamily: 'BYekan',
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.blue[800],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[100],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'تعداد دانش‌آموزان: ${widget.students.length}',
+                          style: TextStyle(
+                            fontFamily: 'BYekan',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue[700],
+                          ),
                         ),
                       ),
                     ],
@@ -221,126 +267,241 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   Widget _buildStudentAttendanceCard(Student student, AttendanceStatus status) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 1),
+            color: Colors.black.withOpacity(0.08),
+            spreadRadius: 0,
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         children: [
           ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: CircleAvatar(
-              backgroundColor: _getStatusColor(status).withValues(alpha: 0.1),
-              child: Text(
-                student.studentNumber,
-                style: TextStyle(
-                  color: _getStatusColor(status),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+            contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            leading: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    _getStatusColor(status),
+                    _getStatusColor(status).withOpacity(0.8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _getStatusColor(status).withOpacity(0.3),
+                    spreadRadius: 0,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.transparent,
+                child: Text(
+                  student.studentNumber,
+                  style: const TextStyle(
+                    fontFamily: 'BYekan',
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),
             title: Text(
               student.fullName,
               style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
+                fontFamily: 'BYekan',
+                fontWeight: FontWeight.w700,
+                fontSize: 17,
+                color: Color(0xFF2D3748),
+                letterSpacing: 0.2,
               ),
             ),
             trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: _getStatusColor(status).withValues(alpha: 0.1),
+                gradient: LinearGradient(
+                  colors: [
+                    _getStatusColor(status),
+                    _getStatusColor(status).withOpacity(0.8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _getStatusColor(status)),
+                boxShadow: [
+                  BoxShadow(
+                    color: _getStatusColor(status).withOpacity(0.3),
+                    spreadRadius: 0,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: Text(
-                _getStatusText(status),
-                style: TextStyle(
-                  color: _getStatusColor(status),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _getStatusIcon(status),
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _getStatusText(status),
+                    style: const TextStyle(
+                      fontFamily: 'BYekan',
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
           
-          // Status buttons
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildStatusButton(
-                    student.id,
-                    'حاضر',
-                    AttendanceStatus.present,
-                    status,
-                    Colors.green,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatusButton(
-                    student.id,
-                    'غایب',
-                    AttendanceStatus.absent,
-                    status,
-                    Colors.red,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatusButton(
-                    student.id,
-                    'تأخیر',
-                    AttendanceStatus.late,
-                    status,
-                    Colors.orange,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatusButton(
-                    student.id,
-                    'موجه',
-                    AttendanceStatus.excused,
-                    status,
-                    Colors.blue,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Notes section
-          if (status != AttendanceStatus.present)
+          // Status buttons (only show in edit mode)
+          if (!widget.isResultMode) ...[
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildStatusButton(
+                      student.id,
+                      'حاضر',
+                      AttendanceStatus.present,
+                      status,
+                      Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildStatusButton(
+                      student.id,
+                      'غایب',
+                      AttendanceStatus.absent,
+                      status,
+                      Colors.red,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildStatusButton(
+                      student.id,
+                      'تأخیر',
+                      AttendanceStatus.late,
+                      status,
+                      Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildStatusButton(
+                      student.id,
+                      'موجه',
+                      AttendanceStatus.excused,
+                      status,
+                      Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          
+          // Notes section (only show in edit mode and for non-present status)
+          if (!widget.isResultMode && status != AttendanceStatus.present)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: TextField(
                 textDirection: TextDirection.rtl,
                 decoration: InputDecoration(
                   labelText: 'یادداشت (اختیاری)',
                   hintText: 'دلیل غیاب یا تأخیر...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                  labelStyle: const TextStyle(
+                    fontFamily: 'BYekan',
+                    color: Colors.grey,
                   ),
-                  contentPadding: const EdgeInsets.all(12),
+                  hintStyle: const TextStyle(
+                    fontFamily: 'BYekan',
+                    color: Colors.grey,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.blue[400]!),
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
                 ),
                 onChanged: (value) {
                   notesMap[student.id] = value;
                 },
                 controller: TextEditingController(
                   text: notesMap[student.id] ?? '',
+                ),
+              ),
+            ),
+          
+          // Show notes in result mode (read-only)
+          if (widget.isResultMode && status != AttendanceStatus.present && notesMap[student.id] != null && notesMap[student.id]!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'یادداشت:',
+                      style: TextStyle(
+                        fontFamily: 'BYekan',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      notesMap[student.id]!,
+                      style: const TextStyle(
+                        fontFamily: 'BYekan',
+                        fontSize: 14,
+                        color: Color(0xFF2D3748),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -373,7 +534,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       ),
       child: Text(
         text,
-        style: TextStyle(
+        style: const TextStyle(
+          fontFamily: 'BYekan',
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
@@ -394,3 +556,4 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 }
+

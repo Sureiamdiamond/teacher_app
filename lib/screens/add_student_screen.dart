@@ -73,6 +73,13 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+          },
+        ),
         title: const Text(
           'اضافه کردن دانش‌آموز',
           style: TextStyle(

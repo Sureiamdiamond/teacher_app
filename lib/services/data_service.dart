@@ -41,6 +41,21 @@ class DataService {
     }
   }
 
+  static Future<void> saveStudent(Student student) async {
+    final students = await getStudents();
+    final existingIndex = students.indexWhere((s) => s.id == student.id);
+    
+    if (existingIndex != -1) {
+      // Update existing student
+      students[existingIndex] = student;
+    } else {
+      // Add new student
+      students.add(student);
+    }
+    
+    await saveStudents(students);
+  }
+
   static Future<void> deleteStudent(String studentId) async {
     final students = await getStudents();
     students.removeWhere((s) => s.id == studentId);
@@ -170,5 +185,26 @@ class DataService {
   static Future<List<Student>> getStudentsWithoutClass() async {
     final allStudents = await getStudents();
     return allStudents.where((student) => student.classId == null).toList();
+  }
+
+  // Add test students
+  static Future<void> addTestStudents() async {
+    final testStudents = <Student>[];
+    
+    // Generate 42 test students
+    for (int i = 1; i <= 42; i++) {
+      testStudents.add(Student(
+        id: 'test_student_$i',
+        firstName: 'دانش‌آموز',
+        lastName: '$i',
+        studentNumber: i.toString(),
+        classId: null, // No class assigned
+      ));
+    }
+    
+    // Add to existing students
+    final existingStudents = await getStudents();
+    existingStudents.addAll(testStudents);
+    await saveStudents(existingStudents);
   }
 }

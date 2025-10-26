@@ -109,6 +109,13 @@ class _EditClassScreenState extends State<EditClassScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+          },
+        ),
         title: const Text('ویرایش کلاس'),
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,

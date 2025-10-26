@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'screens/home_screen.dart';
+import 'utils/app_theme.dart';
 
 void main() {
   runApp(const TeacherApp());
@@ -25,9 +26,7 @@ class TeacherApp extends StatelessWidget {
           PersianMaterialLocalizations.delegate,
           PersianCupertinoLocalizations.delegate,
         ],
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
+        theme: AppTheme.lightTheme.copyWith(
           appBarTheme: const AppBarTheme(
             centerTitle: true,
             elevation: 0,

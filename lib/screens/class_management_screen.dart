@@ -104,6 +104,13 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+          },
+        ),
         title: const Text('مدیریت کلاس‌ها'),
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,

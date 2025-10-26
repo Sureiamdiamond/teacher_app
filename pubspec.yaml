@@ -30,3 +30,8 @@ flutter:
     - family: Vazir
       fonts:
         - asset: assets/fonts/Vazir-Regular.ttf
+    - family: BYekan
+      fonts:
+        - asset: assets/fonts/BYekan.ttf
+        - asset: assets/fonts/BYekanBold.ttf
+          weight: 700

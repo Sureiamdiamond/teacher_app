@@ -99,6 +99,13 @@ class _AddClassScreenState extends State<AddClassScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+          },
+        ),
         title: const Text('اضافه کردن کلاس'),
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,
