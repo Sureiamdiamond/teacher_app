@@ -113,7 +113,7 @@ class _EditClassScreenState extends State<EditClassScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            Navigator.pop(context);
           },
         ),
         title: const Text('ویرایش کلاس'),
@@ -142,8 +142,10 @@ class _EditClassScreenState extends State<EditClassScreen> {
               const SizedBox(height: 20),
               _buildTextField(
                 label: 'نام کلاس',
+
                 controller: _nameController,
                 hint: 'نام کلاس را وارد کنید',
+
                 maxLength: 50,
               ),
               const SizedBox(height: 20),

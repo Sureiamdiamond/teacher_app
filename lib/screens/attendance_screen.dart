@@ -130,14 +130,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            Navigator.pop(context);
           },
         ),
         title: const Text(
@@ -188,14 +191,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.blue[50]!, Colors.white],
+                      colors: isDark 
+                        ? [Colors.blue[900]!, Colors.blue[800]!]
+                        : [Colors.blue[50]!, Colors.white],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.blue.withOpacity(0.1),
+                        color: isDark
+                          ? Colors.black.withValues(alpha: 0.3)
+                          : Colors.blue.withValues(alpha: 0.1),
                         spreadRadius: 0,
                         blurRadius: 20,
                         offset: const Offset(0, 4),
@@ -207,42 +214,42 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.blue[100],
+                          color: isDark ? Colors.blue[700] : Colors.blue[100],
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.calendar_today,
                           size: 28,
-                          color: Colors.blue[700],
+                          color: isDark ? Colors.blue[200] : Colors.blue[700],
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        _getPersianDate(widget.selectedDate),
-                        style: TextStyle(
-                          fontFamily: 'BYekan',
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.blue[800],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.blue[100],
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'تعداد دانش‌آموزان: ${widget.students.length}',
+                        Text(
+                          _getPersianDate(widget.selectedDate),
                           style: TextStyle(
                             fontFamily: 'BYekan',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue[700],
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.blue[200] : Colors.blue[800],
                           ),
                         ),
-                      ),
+                      const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.blue[700] : Colors.blue[100],
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'تعداد دانش‌آموزان: ${widget.students.length}',
+                            style: TextStyle(
+                              fontFamily: 'BYekan',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.blue[200] : Colors.blue[700],
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -266,20 +273,23 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   Widget _buildStudentAttendanceCard(Student student, AttendanceStatus status) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             spreadRadius: 0,
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             spreadRadius: 0,
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -296,14 +306,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 gradient: LinearGradient(
                   colors: [
                     _getStatusColor(status),
-                    _getStatusColor(status).withOpacity(0.8),
+                    _getStatusColor(status).withValues(alpha: 0.8),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: _getStatusColor(status).withOpacity(0.3),
+                    color: _getStatusColor(status).withValues(alpha: 0.3),
                     spreadRadius: 0,
                     blurRadius: 8,
                     offset: const Offset(0, 2),
@@ -326,11 +336,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             ),
             title: Text(
               student.fullName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'BYekan',
                 fontWeight: FontWeight.w700,
                 fontSize: 17,
-                color: Color(0xFF2D3748),
+                color: theme.colorScheme.onSurface,
                 letterSpacing: 0.2,
               ),
             ),
@@ -340,7 +350,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 gradient: LinearGradient(
                   colors: [
                     _getStatusColor(status),
-                    _getStatusColor(status).withOpacity(0.8),
+                    _getStatusColor(status).withValues(alpha: 0.8),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -348,7 +358,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: _getStatusColor(status).withOpacity(0.3),
+                    color: _getStatusColor(status).withValues(alpha: 0.3),
                     spreadRadius: 0,
                     blurRadius: 8,
                     offset: const Offset(0, 2),
@@ -437,27 +447,29 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 decoration: InputDecoration(
                   labelText: 'یادداشت (اختیاری)',
                   hintText: 'دلیل غیاب یا تأخیر...',
-                  labelStyle: const TextStyle(
+                  labelStyle: TextStyle(
                     fontFamily: 'BYekan',
-                    color: Colors.grey,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
-                  hintStyle: const TextStyle(
+                  hintStyle: TextStyle(
                     fontFamily: 'BYekan',
-                    color: Colors.grey,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                    borderSide: BorderSide(color: theme.dividerColor),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                    borderSide: BorderSide(color: theme.dividerColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue[400]!),
+                    borderSide: BorderSide(color: theme.primaryColor),
                   ),
                   contentPadding: const EdgeInsets.all(16),
+                  fillColor: isDark ? theme.colorScheme.surface : null,
+                  filled: isDark,
                 ),
                 onChanged: (value) {
                   notesMap[student.id] = value;
@@ -472,35 +484,37 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           if (widget.isResultMode && status != AttendanceStatus.present && notesMap[student.id] != null && notesMap[student.id]!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
-                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark 
+                      ? theme.colorScheme.surface
+                      : Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'یادداشت:',
-                      style: TextStyle(
-                        fontFamily: 'BYekan',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[600],
+                      Text(
+                        'یادداشت:',
+                        style: TextStyle(
+                          fontFamily: 'BYekan',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      notesMap[student.id]!,
-                      style: const TextStyle(
-                        fontFamily: 'BYekan',
-                        fontSize: 14,
-                        color: Color(0xFF2D3748),
+                      const SizedBox(height: 4),
+                      Text(
+                        notesMap[student.id]!,
+                        style: TextStyle(
+                          fontFamily: 'BYekan',
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -518,6 +532,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     Color color,
   ) {
     final isSelected = currentStatus == status;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return ElevatedButton(
       onPressed: () {
         setState(() {
@@ -525,8 +542,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         });
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? color : Colors.grey[100],
-        foregroundColor: isSelected ? Colors.white : color,
+        backgroundColor: isSelected 
+          ? color 
+          : isDark 
+            ? theme.colorScheme.surface
+            : Colors.grey[100],
+        foregroundColor: isSelected 
+          ? Colors.white 
+          : isDark
+            ? theme.colorScheme.onSurface
+            : color,
         padding: const EdgeInsets.symmetric(vertical: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),

@@ -70,14 +70,17 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            Navigator.pop(context);
           },
         ),
         title: const Text(
@@ -101,11 +104,13 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.1),
+                      color: isDark
+                        ? Colors.black.withValues(alpha: 0.3)
+                        : Colors.grey.withValues(alpha: 0.1),
                       spreadRadius: 1,
                       blurRadius: 3,
                       offset: const Offset(0, 1),
@@ -117,7 +122,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     Icon(
                       Icons.person_add,
                       size: 48,
-                      color: Colors.blue[600],
+                      color: theme.primaryColor,
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -125,7 +130,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -133,7 +138,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                       'لطفاً اطلاعات دانش‌آموز را وارد کنید',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600],
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -215,13 +220,18 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     TextInputType? keyboardType,
     int? maxLength,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
+            color: isDark
+              ? Colors.black.withValues(alpha: 0.3)
+              : Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 1),
@@ -242,14 +252,14 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           decoration: InputDecoration(
             labelText: label,
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[400]),
-            prefixIcon: Icon(icon, color: Colors.blue[600]),
+            hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+            prefixIcon: Icon(icon, color: theme.primaryColor),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: isDark ? theme.colorScheme.surface : Colors.grey[50],
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,

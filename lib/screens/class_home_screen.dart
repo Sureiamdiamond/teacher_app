@@ -1093,7 +1093,7 @@ class _ClassHomeScreenState extends State<ClassHomeScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            Navigator.pop(context);
           },
         ),
         actions: [
@@ -1245,7 +1245,7 @@ class _ClassHomeScreenState extends State<ClassHomeScreen> {
                       backgroundColor: Colors.blue[700],
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('برو به امروز'),
+                    child: const Text('برو به امروز' ,),
                   ),
               ],
             ),

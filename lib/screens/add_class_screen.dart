@@ -103,7 +103,7 @@ class _AddClassScreenState extends State<AddClassScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            Navigator.pop(context);
           },
         ),
         title: const Text('اضافه کردن کلاس'),
