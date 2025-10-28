@@ -10,6 +10,7 @@ import 'attendance_screen.dart';
 import 'attendance_history_screen.dart';
 import 'edit_student_screen.dart';
 import 'class_management_screen.dart';
+import 'grades_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1633,6 +1634,14 @@ class _HomeScreenState extends State<HomeScreen> {
                      await _deleteAllStudents();
                    }
                    break;
+                 case 'grades':
+                   Navigator.push(
+                     context,
+                     MaterialPageRoute(
+                       builder: (context) => const GradesScreen(),
+                     ),
+                   );
+                   break;
                }
              },
             itemBuilder: (BuildContext context) => [
@@ -1655,6 +1664,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(Icons.assessment, color: Colors.blue[700]),
                     const SizedBox(width: 8),
                      Text('گزارش‌گیری' , style: TextStyle(color:  isDarkMode ?Colors.white70:Colors.black),),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'grades',
+                enabled: true,
+                child: Row(
+                  children: [
+                    Icon(Icons.grade, color: Colors.purple[700]),
+                    const SizedBox(width: 8),
+                     Text('نمرات درس' , style: TextStyle(color:  isDarkMode ?Colors.white70:Colors.black),),
                   ],
                 ),
               ),

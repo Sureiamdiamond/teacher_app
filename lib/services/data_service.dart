@@ -3,11 +3,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/student.dart';
 import '../models/attendance_record.dart';
 import '../models/class_model.dart';
+import '../models/lesson.dart';
+import '../models/grade.dart';
 
 class DataService {
   static const String _studentsKey = 'students';
   static const String _attendanceKey = 'attendance';
   static const String _classesKey = 'classes';
+  static const String _lessonsKey = 'lessons';
+  static const String _gradesKey = 'grades';
 
   // Student management
   static Future<List<Student>> getStudents() async {
@@ -206,5 +210,106 @@ class DataService {
     final existingStudents = await getStudents();
     existingStudents.addAll(testStudents);
     await saveStudents(existingStudents);
+  }
+
+  // Lesson management
+  static Future<List<Lesson>> getLessons() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lessonsJson = prefs.getStringList(_lessonsKey) ?? [];
+    return lessonsJson
+        .map((json) => Lesson.fromJson(jsonDecode(json)))
+        .toList();
+  }
+
+  static Future<void> saveLessons(List<Lesson> lessons) async {
+    final prefs = await SharedPreferences.getInstance();
+    final lessonsJson = lessons
+        .map((lesson) => jsonEncode(lesson.toJson()))
+        .toList();
+    await prefs.setStringList(_lessonsKey, lessonsJson);
+  }
+
+  static Future<void> addLesson(Lesson lesson) async {
+    final lessons = await getLessons();
+    lessons.add(lesson);
+    await saveLessons(lessons);
+  }
+
+  static Future<void> updateLesson(Lesson lesson) async {
+    final lessons = await getLessons();
+    final index = lessons.indexWhere((l) => l.id == lesson.id);
+    if (index != -1) {
+      lessons[index] = lesson;
+      await saveLessons(lessons);
+    }
+  }
+
+  static Future<void> deleteLesson(String lessonId) async {
+    final lessons = await getLessons();
+    lessons.removeWhere((l) => l.id == lessonId);
+    await saveLessons(lessons);
+    
+    // Also remove grades for this lesson
+    final grades = await getGrades();
+    grades.removeWhere((grade) => grade.lessonId == lessonId);
+    await saveGrades(grades);
+  }
+
+  // Grade management
+  static Future<List<Grade>> getGrades() async {
+    final prefs = await SharedPreferences.getInstance();
+    final gradesJson = prefs.getStringList(_gradesKey) ?? [];
+    return gradesJson
+        .map((json) => Grade.fromJson(jsonDecode(json)))
+        .toList();
+  }
+
+  static Future<void> saveGrades(List<Grade> grades) async {
+    final prefs = await SharedPreferences.getInstance();
+    final gradesJson = grades
+        .map((grade) => jsonEncode(grade.toJson()))
+        .toList();
+    await prefs.setStringList(_gradesKey, gradesJson);
+  }
+
+  static Future<void> addGrade(Grade grade) async {
+    final grades = await getGrades();
+    grades.add(grade);
+    await saveGrades(grades);
+  }
+
+  static Future<void> updateGrade(Grade grade) async {
+    final grades = await getGrades();
+    final index = grades.indexWhere((g) => g.id == grade.id);
+    if (index != -1) {
+      grades[index] = grade;
+      await saveGrades(grades);
+    }
+  }
+
+  static Future<void> deleteGrade(String gradeId) async {
+    final grades = await getGrades();
+    grades.removeWhere((g) => g.id == gradeId);
+    await saveGrades(grades);
+  }
+
+  static Future<Grade?> getStudentGradeForLesson(String studentId, String lessonId) async {
+    final grades = await getGrades();
+    try {
+      return grades.firstWhere((grade) => 
+          grade.studentId == studentId && grade.lessonId == lessonId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<List<Grade>> getGradesForLesson(String lessonId) async {
+    final grades = await getGrades();
+    return grades.where((grade) => grade.lessonId == lessonId).toList();
+  }
+
+  static Future<List<Grade>> getGradesForStudent(String studentId) async {
+    final grades = await getGrades();
+    return grades.where((grade) => grade.studentId == studentId).toList();
   }
 }
