@@ -258,6 +258,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         trailing: PopupMenuButton<String>(
+          color: isDarkMode ? Colors.grey[850] : Colors.white,
+          iconColor: isDarkMode ? Colors.white : Colors.black,
           onSelected: (value) async {
             if (value == 'edit') {
                   await _editStudent(student);
@@ -266,13 +268,13 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(
+             PopupMenuItem(
               value: 'edit',
               child: Row(
                 children: [
                   Icon(Icons.edit, size: 20),
                   SizedBox(width: 8),
-                  Text('ویرایش'),
+                  Text('ویرایش' ,  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),),
                 ],
               ),
             ),

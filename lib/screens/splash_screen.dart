@@ -172,6 +172,19 @@ class _SplashScreenState extends State<SplashScreen>
                             color: Colors.white70,
                           ),
                         ),
+
+                        const SizedBox(height: 40),
+
+                        // Loading text
+                        const Text(
+                          '🤍'+'Created by Parsa Banitaba for Yeganeh',
+                          style: TextStyle(
+                            fontFamily: 'BYekan',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white70,
+                          ),
+                        ),
                       ],
                     ),
                   ),
