@@ -1,4 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
+import 'package:excel/excel.dart' hide Border;
+import 'package:persian_datetime_picker/persian_datetime_picker.dart';
+import 'dart:io';
+import 'dart:convert';
 import '../models/student.dart';
 import '../models/lesson.dart';
 import '../models/grade.dart';
@@ -104,6 +113,781 @@ class _GradesScreenState extends State<GradesScreen> {
       selectedClass = classModel;
     });
     await _loadData();
+  }
+
+  Future<void> _showLessonOptions(Lesson lesson) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'گزینه‌های درس "${lesson.name}"',
+                style: TextStyle(
+                  fontFamily: 'BYekan',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: Icon(Icons.edit, color: Colors.blue[600]),
+                title: Text(
+                  'ویرایش درس',
+                  style: TextStyle(
+                    fontFamily: 'BYekan',
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _editLesson(lesson);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.delete, color: Colors.red[600]),
+                title: Text(
+                  'حذف درس',
+                  style: TextStyle(
+                    fontFamily: 'BYekan',
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _deleteLesson(lesson);
+                },
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _editLesson(Lesson lesson) async {
+    final TextEditingController controller = TextEditingController(text: lesson.name);
+    
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          title: Text(
+            'ویرایش درس',
+            style: TextStyle(
+              fontFamily: 'BYekan',
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
+          content: TextField(
+            controller: controller,
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+            decoration: InputDecoration(
+              labelText: 'نام درس',
+              labelStyle: TextStyle(
+                color: isDarkMode ? Colors.grey[300] : Colors.grey[600],
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('لغو'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text),
+              child: const Text('ذخیره'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != null && result.trim().isNotEmpty && result.trim() != lesson.name) {
+      try {
+        final updatedLesson = lesson.copyWith(name: result.trim());
+        await DataService.updateLesson(updatedLesson);
+        
+        setState(() {
+          final index = lessons.indexWhere((l) => l.id == lesson.id);
+          if (index != -1) {
+            lessons[index] = updatedLesson;
+          }
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'درس "${result.trim()}" ویرایش شد',
+              style: TextStyle(
+                fontFamily: 'BYekan',
+                color: isDarkMode ? Colors.grey[800] : Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.green[600],
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } catch (e) {
+        // Handle error silently
+      }
+    }
+  }
+
+  Future<void> _deleteLesson(Lesson lesson) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          title: Text(
+            'حذف درس',
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          content: Text(
+            'آیا مطمئن هستید که می‌خواهید درس "${lesson.name}" را حذف کنید؟\nتمام نمرات مربوط به این درس نیز حذف خواهند شد.',
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('لغو'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('حذف', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await DataService.deleteLesson(lesson.id);
+        
+        setState(() {
+          lessons.removeWhere((l) => l.id == lesson.id);
+          if (selectedLesson?.id == lesson.id) {
+            selectedLesson = null;
+            studentGrades.clear();
+            studentStatuses.clear();
+            for (final controller in gradeControllers.values) {
+              controller.clear();
+            }
+          }
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'درس "${lesson.name}" حذف شد',
+              style: TextStyle(
+                fontFamily: 'BYekan',
+                color: isDarkMode ? Colors.grey[800] : Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.red[600],
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } catch (e) {
+        // Handle error silently
+      }
+    }
+  }
+
+  Future<void> _saveGrades() async {
+    if (selectedLesson == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'ابتدا یک درس انتخاب کنید',
+            style: TextStyle(
+              fontFamily: 'Vazir',
+              color: isDarkMode ? Colors.grey[800] : Colors.white,
+            ),
+          ),
+          backgroundColor: Colors.orange[600],
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Count saved grades
+    int savedCount = 0;
+    for (final student in students) {
+      if (studentGrades[student.id] != null || studentStatuses[student.id] != null) {
+        savedCount++;
+      }
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$savedCount نمره ذخیره شد',
+          style: TextStyle(
+            fontFamily: 'Vazir',
+            color: isDarkMode ? Colors.grey[800] : Colors.white,
+          ),
+        ),
+        backgroundColor: Colors.green[600],
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _exportGrades() async {
+    if (selectedLesson == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'ابتدا یک درس انتخاب کنید',
+            style: TextStyle(
+              fontFamily: 'Vazir',
+              color: isDarkMode ? Colors.grey[800] : Colors.white,
+            ),
+          ),
+          backgroundColor: Colors.orange[600],
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Show export options
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'گزینه‌های خروجی',
+                style: TextStyle(
+                  fontFamily: 'Vazir',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: Icon(Icons.picture_as_pdf, color: Colors.red[600]),
+                title: Text(
+                  'خروجی PDF',
+                  style: TextStyle(
+                    fontFamily: 'Vazir',
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportToPDF();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.table_chart, color: Colors.blue[600]),
+                title: Text(
+                  'خروجی Excel',
+                  style: TextStyle(
+                    fontFamily: 'Vazir',
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportToExcel();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.text_snippet, color: Colors.green[600]),
+                title: Text(
+                  'خروجی متنی',
+                  style: TextStyle(
+                    fontFamily: 'Vazir',
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportToText();
+                },
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getPersianDate(DateTime date) {
+    final jalali = Jalali.fromDateTime(date);
+    final persianMonths = [
+      'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+    ];
+    
+    final day = _toPersianNumbers(jalali.day.toString());
+    final month = persianMonths[jalali.month - 1];
+    
+    return '$day $month';
+  }
+
+  String _toPersianNumbers(String text) {
+    const englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    
+    String result = text;
+    for (int i = 0; i < englishNumbers.length; i++) {
+      result = result.replaceAll(englishNumbers[i], persianNumbers[i]);
+    }
+    return result;
+  }
+
+  Future<pw.Font> _loadPersianFont() async {
+    try {
+      final fontData = await rootBundle.load('assets/fonts/Vazir-Regular.ttf');
+      return pw.Font.ttf(fontData);
+    } catch (e) {
+      // Fallback to default font if Persian font is not available
+      return pw.Font.helvetica();
+    }
+  }
+
+  Future<void> _exportToPDF() async {
+    if (selectedLesson == null) return;
+
+    try {
+      // Create PDF document
+      final pdf = pw.Document();
+      final persianFont = await _loadPersianFont();
+      
+      // Split data into pages (max 13 students per page)
+      const int studentsPerPage = 13;
+      final totalPages = (students.length / studentsPerPage).ceil();
+      
+      for (int pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        final startIndex = pageIndex * studentsPerPage;
+        final endIndex = (startIndex + studentsPerPage).clamp(0, students.length);
+        final pageStudents = students.sublist(startIndex, endIndex);
+        
+        pdf.addPage(
+          pw.Page(
+            textDirection: pw.TextDirection.rtl,
+            pageFormat: PdfPageFormat.a4,
+            build: (pw.Context context) {
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  // Header for each page
+                  pw.Header(
+                    level: 0,
+                    child: pw.Text(
+                      'گزارش نمرات',
+                      style: pw.TextStyle(
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                        font: persianFont,
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(height: 20),
+                  
+                  // Lesson info
+                  pw.Text(
+                    'نام درس: ${selectedLesson!.name}',
+                    style: pw.TextStyle(
+                      fontSize: 16,
+                      font: persianFont,
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  
+                  // Class info
+                  pw.Text(
+                    selectedClass != null 
+                      ? 'نام کلاس: ${selectedClass!.name}'
+                      : 'نام کلاس: همه دانش‌آموزان',
+                    style: pw.TextStyle(
+                      fontSize: 16,
+                      font: persianFont,
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  
+                  // Date
+                  pw.Text(
+                    'تاریخ: ${_getPersianDate(DateTime.now())}',
+                    style: pw.TextStyle(
+                      fontSize: 16,
+                      font: persianFont,
+                    ),
+                  ),
+                  
+                  // Page info
+                  if (totalPages > 1) ...[
+                    pw.SizedBox(height: 10),
+                    pw.Text(
+                      'صفحه ${pageIndex + 1} از $totalPages',
+                      style: pw.TextStyle(
+                        fontSize: 14,
+                        font: persianFont,
+                      ),
+                    ),
+                  ],
+                  pw.SizedBox(height: 20),
+                  
+                  // Table header
+                  pw.Text(
+                    'جدول نمرات:',
+                    style: pw.TextStyle(
+                      fontSize: 16, 
+                      fontWeight: pw.FontWeight.bold,
+                      font: persianFont,
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  
+                  // Table
+                  pw.Table(
+                    border: pw.TableBorder.all(),
+                    columnWidths: {
+                      0: const pw.FlexColumnWidth(1),     // شماره
+                      1: const pw.FlexColumnWidth(1.5),   // نام
+                      2: const pw.FlexColumnWidth(2),     // نام خانوادگی
+                      3: const pw.FlexColumnWidth(1),    // نمره
+                    },
+                    children: [
+                      // Header row
+                      pw.TableRow(
+                        decoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(
+                              'نمره',
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                font: persianFont,
+                              ),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(
+                              'نام خانوادگی',
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                font: persianFont,
+                              ),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(
+                              'نام',
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                font: persianFont,
+                              ),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(
+                              'شماره',
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                font: persianFont,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Data rows for this page
+                      ...pageStudents.map((student) {
+                        final grade = studentGrades[student.id];
+                        final status = studentStatuses[student.id];
+                        final gradeText = grade ?? status ?? '-';
+                        
+                        return pw.TableRow(
+                          children: [
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Text(
+                                gradeText,
+                                style: pw.TextStyle(font: persianFont),
+                              ),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Text(
+                                student.lastName,
+                                style: pw.TextStyle(font: persianFont),
+                              ),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Text(
+                                student.firstName,
+                                style: pw.TextStyle(font: persianFont),
+                              ),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Text(
+                                student.studentNumber,
+                                style: pw.TextStyle(font: persianFont),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      }
+
+      // Save PDF
+      final directory = await _getDownloadDirectory();
+      final fileName = '${_getPersianFileName()}.pdf';
+      final file = File('${directory.path}/$fileName');
+      final pdfBytes = await pdf.save();
+      await file.writeAsBytes(pdfBytes, mode: FileMode.write);
+      
+      // Open file
+      await OpenFile.open(file.path);
+      _showMessage('فایل PDF با موفقیت ایجاد شد\nمسیر: ${file.path}');
+    } catch (e) {
+      _showMessage('خطا در تولید PDF: $e');
+    }
+  }
+
+  Future<void> _exportToExcel() async {
+    if (selectedLesson == null) return;
+
+    try {
+      // Create Excel workbook
+      var excel = Excel.createExcel();
+      Sheet sheetObject = excel['گزارش نمرات'];
+      
+      // Header
+      sheetObject.cell(CellIndex.indexByString('A1')).value = TextCellValue('گزارش نمرات');
+      sheetObject.cell(CellIndex.indexByString('A2')).value = TextCellValue('نام درس: ${selectedLesson!.name}');
+      
+      // Class info
+      if (selectedClass != null) {
+        sheetObject.cell(CellIndex.indexByString('A3')).value = TextCellValue('نام کلاس: ${selectedClass!.name}');
+      } else {
+        sheetObject.cell(CellIndex.indexByString('A3')).value = TextCellValue('نام کلاس: همه دانش‌آموزان');
+      }
+      
+      // Date
+      final now = DateTime.now();
+      final persianDate = '${now.year}/${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}';
+      sheetObject.cell(CellIndex.indexByString('A4')).value = TextCellValue('تاریخ: $persianDate');
+      
+      // Empty row
+      sheetObject.cell(CellIndex.indexByString('A6')).value = TextCellValue('جدول نمرات:');
+      
+      // Table headers (RTL order: شماره, نام, نام خانوادگی, نمره)
+      sheetObject.cell(CellIndex.indexByString('A8')).value = TextCellValue('نمره');
+      sheetObject.cell(CellIndex.indexByString('B8')).value = TextCellValue('نام خانوادگی');
+      sheetObject.cell(CellIndex.indexByString('C8')).value = TextCellValue('نام');
+      sheetObject.cell(CellIndex.indexByString('D8')).value = TextCellValue('شماره');
+      
+      // Table data
+      int rowIndex = 9;
+      for (final student in students) {
+        final grade = studentGrades[student.id];
+        final status = studentStatuses[student.id];
+        final gradeText = grade ?? status ?? '-';
+        
+        sheetObject.cell(CellIndex.indexByString('A$rowIndex')).value = TextCellValue(gradeText);
+        sheetObject.cell(CellIndex.indexByString('B$rowIndex')).value = TextCellValue(student.lastName);
+        sheetObject.cell(CellIndex.indexByString('C$rowIndex')).value = TextCellValue(student.firstName);
+        sheetObject.cell(CellIndex.indexByString('D$rowIndex')).value = TextCellValue(student.studentNumber);
+        rowIndex++;
+      }
+
+      // Save Excel file
+      final directory = await _getDownloadDirectory();
+      final fileName = '${_getPersianFileName()}.xlsx';
+      final file = File('${directory.path}/$fileName');
+      final bytes = excel.encode();
+      await file.writeAsBytes(bytes!, mode: FileMode.write);
+      
+      await OpenFile.open(file.path);
+      _showMessage('فایل Excel با موفقیت ایجاد شد\nمسیر: ${file.path}');
+    } catch (e) {
+      _showMessage('خطا در تولید Excel: $e');
+    }
+  }
+
+  Future<Directory> _getDownloadDirectory() async {
+    if (Platform.isAndroid) {
+      // For Android, try to get the main Downloads directory
+      try {
+        // Try to access the main Downloads directory
+        final downloadPath = Directory('/storage/emulated/0/Download');
+        if (!await downloadPath.exists()) {
+          await downloadPath.create(recursive: true);
+        }
+        return downloadPath;
+      } catch (e) {
+        // Fallback to external storage directory
+        try {
+          final directory = await getExternalStorageDirectory();
+          if (directory != null) {
+            final fallbackPath = Directory('${directory.path}/Download');
+            if (!await fallbackPath.exists()) {
+              await fallbackPath.create(recursive: true);
+            }
+            return fallbackPath;
+          }
+        } catch (e) {
+          // Final fallback to application documents directory
+        }
+      }
+    }
+    
+    // Fallback to application documents directory
+    return await getApplicationDocumentsDirectory();
+  }
+
+  String _getPersianFileName() {
+    final now = DateTime.now();
+    final persianDate = _getPersianDate(now);
+    // Convert Persian date to a safe filename format
+    final safeDate = persianDate.replaceAll('/', '_').replaceAll(' ', '_');
+    return 'گزارش_نمرات_${selectedLesson?.name ?? 'نامشخص'}_$safeDate';
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontFamily: 'Vazir',
+            color: isDarkMode ? Colors.grey[800] : Colors.white,
+          ),
+        ),
+        backgroundColor: Colors.blue[700],
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> _exportToText() async {
+    if (selectedLesson == null) return;
+
+    try {
+      final StringBuffer content = StringBuffer();
+      
+      // Header
+      content.writeln('گزارش نمرات');
+      content.writeln('=' * 50);
+      content.writeln('نام درس: ${selectedLesson!.name}');
+      
+      // Class info
+      if (selectedClass != null) {
+        content.writeln('نام کلاس: ${selectedClass!.name}');
+      } else {
+        content.writeln('نام کلاس: همه دانش‌آموزان');
+      }
+      
+      // Date
+      content.writeln('تاریخ: ${_getPersianDate(DateTime.now())}');
+      content.writeln('تعداد کل دانش‌آموزان: ${students.length}');
+      
+      // Count grades
+      int gradedCount = 0;
+      int numericGrades = 0;
+      int descriptiveGrades = 0;
+      
+      for (final student in students) {
+        if (studentGrades[student.id] != null) {
+          gradedCount++;
+          numericGrades++;
+        } else if (studentStatuses[student.id] != null) {
+          gradedCount++;
+          descriptiveGrades++;
+        }
+      }
+      
+      content.writeln('تعداد نمره‌گذاری شده: $gradedCount');
+      content.writeln('تعداد نمره عددی: $numericGrades');
+      content.writeln('تعداد نمره توصیفی: $descriptiveGrades');
+      content.writeln('');
+      content.writeln('جزئیات:');
+      content.writeln('-' * 80);
+      
+      // Table header (RTL order: شماره, نام, نام خانوادگی, نمره)
+      content.writeln('${'نمره'.padRight(12)} ${'نام خانوادگی'.padRight(15)} ${'نام'.padRight(15)} ${'شماره'.padRight(8)}');
+      content.writeln('-' * 80);
+      
+      // Table data
+      for (final student in students) {
+        final grade = studentGrades[student.id];
+        final status = studentStatuses[student.id];
+        final gradeText = grade ?? status ?? '-';
+        
+        content.writeln(
+          '${gradeText.padRight(12)} '
+          '${student.lastName.padRight(15)} '
+          '${student.firstName.padRight(15)} '
+          '${student.studentNumber.padRight(8)}'
+        );
+      }
+      
+      content.writeln('-' * 80);
+      content.writeln('تاریخ ایجاد گزارش: ${_getPersianDate(DateTime.now())}');
+
+      // Save text file
+      final directory = await _getDownloadDirectory();
+      final fileName = '${_getPersianFileName()}.txt';
+      final file = File('${directory.path}/$fileName');
+      await file.writeAsString(content.toString(), encoding: utf8, mode: FileMode.write);
+      
+      await OpenFile.open(file.path);
+      _showMessage('فایل متنی با موفقیت ایجاد شد\nمسیر: ${file.path}');
+    } catch (e) {
+      _showMessage('خطا در ایجاد فایل متنی: $e');
+    }
   }
 
   Future<void> _selectLesson(Lesson? lesson) async {
@@ -523,9 +1307,10 @@ class _GradesScreenState extends State<GradesScreen> {
                       ),
                     child: Directionality(
                       textDirection: TextDirection.rtl,
-                      child: TextField(
+                      child:TextField(
                         controller: gradeControllers[student.id],
-                        textAlign: TextAlign.center,
+                        textAlign: TextAlign.center, // وسط افقی
+                        textAlignVertical: TextAlignVertical.center, // وسط عمودی
                         keyboardType: TextInputType.number,
                         enabled: selectedLesson != null && studentStatuses[student.id] == null,
                         style: TextStyle(
@@ -536,11 +1321,13 @@ class _GradesScreenState extends State<GradesScreen> {
                         decoration: InputDecoration(
                           hintText: 'نمره عددی',
                           hintStyle: TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
+
                             color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                           ),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          isCollapsed: true, // این باعث میشه ارتفاع دقیق‌تری بگیره
+                          contentPadding: EdgeInsets.symmetric(vertical: 8), // کمک به وسط قرار گرفتن کامل hint
                         ),
                         onTap: () {
                           if (selectedLesson == null) {
@@ -566,6 +1353,7 @@ class _GradesScreenState extends State<GradesScreen> {
                           _startEditingStudent(student.id);
                         },
                       ),
+
                     ),
                   ),
                 ),
@@ -608,11 +1396,13 @@ class _GradesScreenState extends State<GradesScreen> {
                             );
                           }
                         },
-                        hint: Text(
-                          'نمره توصیفی',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                        hint: Center(
+                          child: Text(
+                            'نمره توصیفی',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                            ),
                           ),
                         ),
                         items: [
@@ -853,6 +1643,7 @@ class _GradesScreenState extends State<GradesScreen> {
                                 padding: const EdgeInsets.only(left: 8),
                                 child: GestureDetector(
                                   onTap: () => _selectLesson(lesson),
+                                  onLongPress: () => _showLessonOptions(lesson),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                     decoration: BoxDecoration(
@@ -1086,6 +1877,48 @@ class _GradesScreenState extends State<GradesScreen> {
                       ),
                     ],
                   ),
+                  // Instruction message
+
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? Colors.blue[900] : Colors.blue[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDarkMode ? Colors.blue[700]! : Colors.blue[200]!,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'نکته: فقط یکی از فیلدها را می‌توانید پر کنید ( نمره عددی یا نمره توصیفی )',
+                            textDirection: TextDirection.rtl,
+                            style: TextStyle(
+                              fontFamily: 'BYekan',
+                              color: isDarkMode ? Colors.blue[200] : Colors.blue[700],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 5),
+                        Icon(
+                          Icons.info_outline,
+                          color: isDarkMode ? Colors.blue[300] : Colors.blue[600],
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 
                 // Students list
@@ -1140,6 +1973,70 @@ class _GradesScreenState extends State<GradesScreen> {
                                 return _buildStudentCard(student);
                               },
                             ),
+                ),
+                // Bottom buttons
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[900] : Colors.white,
+                    border: Border(
+                      top: BorderSide(
+                        color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Export button
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _exportGrades,
+                          icon: Icon(Icons.download, color: Colors.white),
+                          label: Text(
+                            'خروجی',
+                            style: TextStyle(
+                              fontFamily: 'Vazir',
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange[600],
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Save button
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _saveGrades,
+                          icon: Icon(Icons.save, color: Colors.white),
+                          label: Text(
+                            'ثبت',
+                            style: TextStyle(
+                              fontFamily: 'Vazir',
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green[600],
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
