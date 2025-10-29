@@ -177,7 +177,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                         // Loading text
                         const Text(
-                          '🤍'+'Created by Parsa Banitaba for Yeganeh',
+                          'by Parsa Banitaba',
                           style: TextStyle(
                             fontFamily: 'BYekan',
                             fontSize: 14,
