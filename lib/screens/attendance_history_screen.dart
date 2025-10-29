@@ -180,31 +180,36 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     return records;
   }
 
+  bool _isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = _isDarkMode(context);
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey[50],
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white70 : Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: const Text(
+        title: Text(
           'گزارش‌گیری حضور و غیاب',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: isDarkMode ? Colors.white70 : Colors.white,
+            fontSize: 20
           ),
         ),
-        backgroundColor: Colors.blue[700],
-        foregroundColor: Colors.black,
+        backgroundColor: isDarkMode ? Colors.blue[900] : Colors.blue[700],
         elevation: 0,
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.download, color: Colors.white),
+            icon: Icon(Icons.download, color: isDarkMode ? Colors.white70 : Colors.white),
             onSelected: (value) async {
               if (value == 'pdf') {
                 await _exportToPDF();
@@ -257,7 +262,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
-                  color: Colors.blue[50],
+                  color: isDarkMode ? Colors.grey[900] : Colors.blue[50],
                   child: Column(
                     children: [
                       // Toggle buttons
@@ -272,17 +277,17 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                               },
                               icon: Icon(
                                 Icons.update,
-                                color: showLatestStatus ? Colors.white : Colors.blue[700],
+                                color: showLatestStatus ? Colors.white : (isDarkMode ? Colors.blue[300] : Colors.blue[700]),
                               ),
                               label: Text(
                                 'وضعیت امروز',
                                 style: TextStyle(
-                                  color: showLatestStatus ? Colors.white : Colors.blue[700],
+                                  color: showLatestStatus ? Colors.white : (isDarkMode ? Colors.blue[300] : Colors.blue[700]),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: showLatestStatus ? Colors.blue[700] : Colors.white,
+                                backgroundColor: showLatestStatus ? Colors.blue[700] : (isDarkMode ? Colors.grey[800] : Colors.white),
                                 side: BorderSide(color: Colors.blue[700]!),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -300,17 +305,17 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                               },
                               icon: Icon(
                                 Icons.calendar_today,
-                                color: !showLatestStatus ? Colors.white : Colors.blue[700],
+                                color: !showLatestStatus ? Colors.white : (isDarkMode ? Colors.blue[300] : Colors.blue[700]),
                               ),
                               label: Text(
                                 'تاریخ مشخص',
                                 style: TextStyle(
-                                  color: !showLatestStatus ? Colors.white : Colors.blue[700],
+                                  color: !showLatestStatus ? Colors.white : (isDarkMode ? Colors.blue[300] : Colors.blue[700]),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: !showLatestStatus ? Colors.blue[700] : Colors.white,
+                                backgroundColor: !showLatestStatus ? Colors.blue[700] : (isDarkMode ? Colors.grey[800] : Colors.white),
                                 side: BorderSide(color: Colors.blue[700]!),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -333,8 +338,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                           },
                           decoration: InputDecoration(
                             labelText: 'مرتب‌سازی بر اساس',
-                            labelStyle: TextStyle(color: Colors.blue[700]),
-                            prefixIcon: Icon(Icons.filter_list, color: Colors.blue[700]),
+                            labelStyle: TextStyle(color: isDarkMode ? Colors.white : Colors.blue[700]),
+                            prefixIcon: Icon(Icons.filter_list, color: isDarkMode ? Colors.white70 : Colors.blue[700]),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(color: Colors.blue[700]!),
@@ -348,7 +353,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                               borderSide: BorderSide(color: Colors.blue[700]!),
                             ),
                             filled: true,
-                            fillColor: Colors.blue[50],
+                            fillColor: isDarkMode ? Colors.grey[850] : Colors.blue[50],
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 12,
@@ -362,7 +367,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                   Icon(
                                     value == 'number' ? Icons.numbers : 
                                     value == 'name' ? Icons.sort_by_alpha : Icons.person,
-                                    color: Colors.blue[700],
+                                    color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
                                     size: 20,
                                   ),
                                   const SizedBox(width: 8),
@@ -370,7 +375,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                     value == 'number' ? 'شماره ترتیب' : 
                                     value == 'name' ? 'الفبا (نام خانوادگی)' : 'الفبا (نام)',
                                     style: TextStyle(
-                                      color: Colors.blue[700],
+                                      color: isDarkMode ? Colors.white : Colors.blue[700],
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -398,9 +403,9 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                   });
                                 }
                               },
-                              icon: Icon(Icons.chevron_left, color: Colors.blue[700]),
+                              icon: Icon(Icons.chevron_left, color: isDarkMode ? Colors.white : Colors.blue[700]),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.blue[100],
+                                backgroundColor: isDarkMode ? Colors.blue[900] : Colors.blue[100],
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -413,25 +418,25 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: Colors.blue[100],
+                                    color: isDarkMode ? Colors.blue[900] : Colors.blue[100],
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.blue[300]!),
+                                    border: Border.all(color: isDarkMode ? Colors.black45 : Colors.blue[300]!),
                                   ),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.calendar_today, color: Colors.blue[700]),
+                                      Icon(Icons.calendar_today, color: isDarkMode ? Colors.white : Colors.blue[700]),
                                       const SizedBox(width: 8),
                                       Text(
                                         _getPersianDate(selectedDate),
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.blue[700],
+                                          color: isDarkMode ? Colors.white : Colors.blue[700],
                                         ),
                                       ),
                                       const SizedBox(width: 4),
-                                      Icon(Icons.arrow_drop_down, color: Colors.blue[700]),
+                                      Icon(Icons.arrow_drop_down, color: isDarkMode ? Colors.white : Colors.blue[700]),
                                     ],
                                   ),
                                 ),
@@ -451,9 +456,9 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                   });
                                 }
                               },
-                              icon: Icon(Icons.chevron_right, color: Colors.blue[700]),
+                              icon: Icon(Icons.chevron_right, color: isDarkMode ? Colors.white : Colors.blue[700]),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.blue[100],
+                                backgroundColor: isDarkMode ? Colors.blue[900] : Colors.blue[100],
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -475,7 +480,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                               Icon(
                                 Icons.event_available,
                                 size: 64,
-                                color: Colors.grey[400],
+                                color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
                               ),
                               const SizedBox(height: 16),
                               Text(
@@ -484,7 +489,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                     : 'هیچ رکوردی برای این تاریخ ثبت نشده است',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.grey[600],
+                                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                                 ),
                               ),
                             ],
@@ -498,16 +503,16 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                               padding: const EdgeInsets.all(16),
                               margin: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.blue[50],
+                                color: isDarkMode ? Colors.grey[800] : Colors.blue[50],
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.blue[200]!),
+                                border: Border.all(color: isDarkMode ? Colors.grey[700]! : Colors.blue[200]!),
                               ),
                               child: Column(
                                 children: [
                                   Icon(
                                     Icons.assessment,
                                     size: 32,
-                                    color: Colors.blue[700],
+                                    color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
@@ -517,7 +522,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.blue[700],
+                                      color: isDarkMode ? Colors.white : Colors.blue[700],
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -538,7 +543,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                     margin: const EdgeInsets.only(bottom: 8),
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: isDarkMode ? Colors.grey[800] : Colors.white,
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
                                         color: _getStatusColor(record.status).withOpacity(0.3),
@@ -546,7 +551,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.grey.withOpacity(0.1),
+                                          color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
                                           spreadRadius: 1,
                                           blurRadius: 2,
                                           offset: const Offset(0, 1),
@@ -584,7 +589,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                                   record.notes!,
                                                   style: TextStyle(
                                                     fontSize: 12,
-                                                    color: Colors.grey[600],
+                                                    color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                                                   ),
                                                 ),
                                               ],
@@ -596,7 +601,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                           _getPersianDate(record.date),
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: Colors.grey[500],
+                                            color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
                                           ),
                                         ),
                                       ],
@@ -624,16 +629,24 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       firstDate: Jalali.fromDateTime(oneYearAgo),
       lastDate: Jalali.fromDateTime(oneDayAhead),
       builder: (context, child) {
+        final isDark = _isDarkMode(context);
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
-                primary: Colors.blue[700]!,
-                onPrimary: Colors.white,
-                surface: Colors.white,
-                onSurface: Colors.black,
-              ),
+              colorScheme: isDark
+                  ? ColorScheme.dark(
+                      primary: Colors.blue[400]!,
+                      onPrimary: Colors.white,
+                      surface: Colors.grey[800]!,
+                      onSurface: Colors.white,
+                    )
+                  : ColorScheme.light(
+                      primary: Colors.blue[700]!,
+                      onPrimary: Colors.white,
+                      surface: Colors.white,
+                      onSurface: Colors.black,
+                    ),
             ),
             child: child!,
           ),

@@ -13,6 +13,7 @@ import 'class_management_screen.dart';
 import 'grades_screen.dart';
 import 'todo_screen.dart';
 import '../services/theme_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -177,16 +178,24 @@ class _HomeScreenState extends State<HomeScreen> {
       firstDate: Jalali.fromDateTime(oneYearAgo),
       lastDate: Jalali.fromDateTime(oneDayAhead),
       builder: (context, child) {
+        final isDark = isDarkMode;
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
-                primary: Colors.blue[700]!,
-                onPrimary: Colors.white,
-                surface: Colors.white,
-                onSurface: Colors.black,
-              ),
+              colorScheme: isDark
+                  ? ColorScheme.dark(
+                      primary: Colors.blue[400]!,
+                      onPrimary: Colors.white,
+                      surface: Colors.grey[800]!,
+                      onSurface: Colors.white,
+                    )
+                  : ColorScheme.light(
+                      primary: Colors.blue[700]!,
+                      onPrimary: Colors.white,
+                      surface: Colors.white,
+                      onSurface: Colors.black,
+                    ),
             ),
             child: child!,
           ),
@@ -1562,6 +1571,171 @@ class _HomeScreenState extends State<HomeScreen> {
            date.day == now.day;
   }
 
+  Future<void> _showAboutDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.blue[700], size: 28),
+              const SizedBox(width: 8),
+              Text(
+                'درباره',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+
+                const SizedBox(height: 8),
+                Text(
+                  'این  اپلیکیشن امکان مدیریت کلاس، حضور و غیاب دانش‌آموزان، وارد کردن نمرات درسی و ... را  به معلمان عزیز می‌دهد.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'ساخته شده توسط Parsa Banitaba',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.blue[900] : Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Version 1.0.0',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          try {
+                            final Uri url = Uri.parse('https://github.com/Sureiamdiamond');
+                            if (!await launchUrl(url, mode: LaunchMode.platformDefault)) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('نمی‌توان لینک را باز کرد'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('خطا: ${e.toString()}'),
+                                  backgroundColor: Colors.red[600],
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.code, size: 20),
+                        label: const Text('GitHub'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[900],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          try {
+                            final Uri url = Uri.parse('https://www.linkedin.com/in/parsabanitaba/?lipi=urn%3Ali%3Apage%3Aprofile_common_profile_index%3B29b7ecf2-b4bb-4020-ab7e-bacb9f645424');
+                            if (!await launchUrl(url, mode: LaunchMode.platformDefault)) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('نمی‌توان لینک را باز کرد'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('خطا: ${e.toString()}'),
+                                  backgroundColor: Colors.red[600],
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.business_center, size: 20),
+                        label: const Text('LinkedIn'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[700],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'بستن',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1658,6 +1832,9 @@ class _HomeScreenState extends State<HomeScreen> {
                      ),
                    );
                    break;
+                 case 'about':
+                   _showAboutDialog();
+                   break;
                }
              },
             itemBuilder: (BuildContext context) => [
@@ -1740,6 +1917,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: students.isNotEmpty ? isDarkMode ?Colors.white70: Colors.black : Colors.grey,
                       ),
                     ),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'about',
+                enabled: true,
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue[700]),
+                    const SizedBox(width: 8),
+                    Text('درباره', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
                   ],
                 ),
               ),

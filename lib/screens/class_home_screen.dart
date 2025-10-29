@@ -157,9 +157,27 @@ class _ClassHomeScreenState extends State<ClassHomeScreen> {
       firstDate: Jalali.fromDateTime(oneYearAgo),
       lastDate: Jalali.fromDateTime(oneDayAhead),
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: child!,
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: isDark
+                  ? ColorScheme.dark(
+                      primary: Colors.blue[400]!,
+                      onPrimary: Colors.white,
+                      surface: Colors.grey[800]!,
+                      onSurface: Colors.white,
+                    )
+                  : ColorScheme.light(
+                      primary: Colors.blue[700]!,
+                      onPrimary: Colors.white,
+                      surface: Colors.white,
+                      onSurface: Colors.black,
+                    ),
+            ),
+            child: child!,
+          ),
         );
       },
     );

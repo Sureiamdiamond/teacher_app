@@ -43,16 +43,24 @@ class _TodoScreenState extends State<TodoScreen> {
       firstDate: Jalali.fromDateTime(oneYearAgo),
       lastDate: Jalali.fromDateTime(oneYearAhead),
       builder: (context, child) {
+        final isDark = _isDarkMode(context);
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
-                primary: Colors.blue[700]!,
-                onPrimary: Colors.white,
-                surface: Colors.white,
-                onSurface: Colors.black,
-              ),
+              colorScheme: isDark
+                  ? ColorScheme.dark(
+                      primary: Colors.blue[400]!,
+                      onPrimary: Colors.white,
+                      surface: Colors.grey[800]!,
+                      onSurface: Colors.white,
+                    )
+                  : ColorScheme.light(
+                      primary: Colors.blue[700]!,
+                      onPrimary: Colors.white,
+                      surface: Colors.white,
+                      onSurface: Colors.black,
+                    ),
             ),
             child: child!,
           ),
