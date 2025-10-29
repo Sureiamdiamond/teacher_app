@@ -12,6 +12,7 @@ import 'edit_student_screen.dart';
 import 'class_management_screen.dart';
 import 'grades_screen.dart';
 import 'todo_screen.dart';
+import '../services/theme_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -44,16 +45,24 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   String sortBy = 'number'; // 'number', 'name', or 'firstName'
   bool isGridView = false; // false = list view, true = grid view
-  bool isDarkMode = false; // false = light mode, true = dark mode
+  final ThemeService _themeService = ThemeService.instance;
 
   @override
   void initState() {
     super.initState();
     _loadStudents();
+    _themeService.addListener(_onThemeChanged);
   }
+
+  void _onThemeChanged() {
+    setState(() {});
+  }
+
+  bool get isDarkMode => _themeService.isDarkMode;
 
   @override
   void dispose() {
+    _themeService.removeListener(_onThemeChanged);
     // Dispose all text controllers
     for (final controller in textControllers.values) {
       controller.dispose();
@@ -1574,9 +1583,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: isDarkMode ? Colors.white70: Colors.white,
           ),
           onPressed: () {
-            setState(() {
-              isDarkMode = !isDarkMode;
-            });
+            _themeService.toggleTheme();
           },
           tooltip: isDarkMode ? 'حالت روشن' : 'حالت تاریک',
         ),

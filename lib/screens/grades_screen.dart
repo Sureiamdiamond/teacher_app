@@ -13,6 +13,7 @@ import '../models/lesson.dart';
 import '../models/grade.dart';
 import '../models/class_model.dart';
 import '../services/data_service.dart';
+import '../services/theme_service.dart';
 
 class GradesScreen extends StatefulWidget {
   const GradesScreen({super.key});
@@ -28,12 +29,15 @@ class _GradesScreenState extends State<GradesScreen> {
   ClassModel? selectedClass;
   Lesson? selectedLesson;
   bool isLoading = true;
-  bool isDarkMode = false;
   Map<String, String> studentGrades = {}; // studentId -> grade
   Map<String, String> studentStatuses = {}; // studentId -> status (خ.خ/خ/ق.ب/ن.ب)
   Map<String, TextEditingController> gradeControllers = {}; // studentId -> TextEditingController
   String? editingStudentId; // Track which student is being edited
   final TextEditingController _searchController = TextEditingController();
+
+  bool __isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
   String _searchQuery = '';
   String sortBy = 'number'; // 'number', 'name', or 'firstName'
   
@@ -118,7 +122,7 @@ class _GradesScreenState extends State<GradesScreen> {
   Future<void> _showLessonOptions(Lesson lesson) async {
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+      backgroundColor: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -135,7 +139,7 @@ class _GradesScreenState extends State<GradesScreen> {
                   fontFamily: 'BYekan',
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : Colors.black,
+                  color: __isDarkMode(context) ? Colors.white : Colors.black,
                 ),
               ),
               const SizedBox(height: 20),
@@ -145,7 +149,7 @@ class _GradesScreenState extends State<GradesScreen> {
                   'ویرایش درس',
                   style: TextStyle(
                     fontFamily: 'BYekan',
-                    color: isDarkMode ? Colors.white : Colors.black,
+                    color: __isDarkMode(context) ? Colors.white : Colors.black,
                   ),
                 ),
                 onTap: () {
@@ -159,7 +163,7 @@ class _GradesScreenState extends State<GradesScreen> {
                   'حذف درس',
                   style: TextStyle(
                     fontFamily: 'BYekan',
-                    color: isDarkMode ? Colors.white : Colors.black,
+                    color: __isDarkMode(context) ? Colors.white : Colors.black,
                   ),
                 ),
                 onTap: () {
@@ -183,24 +187,25 @@ class _GradesScreenState extends State<GradesScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          backgroundColor:
+        __isDarkMode(context) ? Colors.grey[800] : Colors.white,
           title: Text(
             'ویرایش درس',
             style: TextStyle(
               fontFamily: 'BYekan',
-              color: isDarkMode ? Colors.white : Colors.black,
+              color: __isDarkMode(context) ? Colors.white : Colors.black,
             ),
           ),
           content: TextField(
             controller: controller,
             textDirection: TextDirection.rtl,
             style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.black,
+              color: __isDarkMode(context) ? Colors.white : Colors.black,
             ),
             decoration: InputDecoration(
               labelText: 'نام درس',
               labelStyle: TextStyle(
-                color: isDarkMode ? Colors.grey[300] : Colors.grey[600],
+                color: __isDarkMode(context) ? Colors.grey[300] : Colors.grey[600],
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -239,7 +244,7 @@ class _GradesScreenState extends State<GradesScreen> {
               'درس "${result.trim()}" ویرایش شد',
               style: TextStyle(
                 fontFamily: 'BYekan',
-                color: isDarkMode ? Colors.grey[800] : Colors.white,
+                color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
               ),
             ),
             backgroundColor: Colors.green[600],
@@ -258,14 +263,14 @@ class _GradesScreenState extends State<GradesScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          backgroundColor: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
           title: Text(
             'حذف درس',
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            style: TextStyle(color: __isDarkMode(context) ? Colors.white : Colors.black),
           ),
           content: Text(
             'آیا مطمئن هستید که می‌خواهید درس "${lesson.name}" را حذف کنید؟\nتمام نمرات مربوط به این درس نیز حذف خواهند شد.',
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            style: TextStyle(color: __isDarkMode(context) ? Colors.white : Colors.black),
           ),
           actions: [
             TextButton(
@@ -303,7 +308,7 @@ class _GradesScreenState extends State<GradesScreen> {
               'درس "${lesson.name}" حذف شد',
               style: TextStyle(
                 fontFamily: 'BYekan',
-                color: isDarkMode ? Colors.grey[800] : Colors.white,
+                color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
               ),
             ),
             backgroundColor: Colors.red[600],
@@ -324,7 +329,7 @@ class _GradesScreenState extends State<GradesScreen> {
             'ابتدا یک درس انتخاب کنید',
             style: TextStyle(
               fontFamily: 'Vazir',
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
+              color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
             ),
           ),
           backgroundColor: Colors.orange[600],
@@ -348,7 +353,7 @@ class _GradesScreenState extends State<GradesScreen> {
           '$savedCount نمره ذخیره شد',
           style: TextStyle(
             fontFamily: 'Vazir',
-            color: isDarkMode ? Colors.grey[800] : Colors.white,
+            color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
           ),
         ),
         backgroundColor: Colors.green[600],
@@ -365,7 +370,7 @@ class _GradesScreenState extends State<GradesScreen> {
             'ابتدا یک درس انتخاب کنید',
             style: TextStyle(
               fontFamily: 'Vazir',
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
+              color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
             ),
           ),
           backgroundColor: Colors.orange[600],
@@ -378,7 +383,7 @@ class _GradesScreenState extends State<GradesScreen> {
     // Show export options
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+      backgroundColor: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -395,7 +400,7 @@ class _GradesScreenState extends State<GradesScreen> {
                   fontFamily: 'Vazir',
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : Colors.black,
+                  color: __isDarkMode(context) ? Colors.white : Colors.black,
                 ),
               ),
               const SizedBox(height: 20),
@@ -405,7 +410,7 @@ class _GradesScreenState extends State<GradesScreen> {
                   'خروجی PDF',
                   style: TextStyle(
                     fontFamily: 'Vazir',
-                    color: isDarkMode ? Colors.white : Colors.black,
+                    color: __isDarkMode(context) ? Colors.white : Colors.black,
                   ),
                 ),
                 onTap: () {
@@ -419,7 +424,7 @@ class _GradesScreenState extends State<GradesScreen> {
                   'خروجی Excel',
                   style: TextStyle(
                     fontFamily: 'Vazir',
-                    color: isDarkMode ? Colors.white : Colors.black,
+                    color: __isDarkMode(context) ? Colors.white : Colors.black,
                   ),
                 ),
                 onTap: () {
@@ -433,7 +438,7 @@ class _GradesScreenState extends State<GradesScreen> {
                   'خروجی متنی',
                   style: TextStyle(
                     fontFamily: 'Vazir',
-                    color: isDarkMode ? Colors.white : Colors.black,
+                    color: __isDarkMode(context) ? Colors.white : Colors.black,
                   ),
                 ),
                 onTap: () {
@@ -803,7 +808,7 @@ class _GradesScreenState extends State<GradesScreen> {
           message,
           style: TextStyle(
             fontFamily: 'Vazir',
-            color: isDarkMode ? Colors.grey[800] : Colors.white,
+            color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
           ),
         ),
         backgroundColor: Colors.blue[700],
@@ -905,19 +910,19 @@ class _GradesScreenState extends State<GradesScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
-          title: Text('اضافه کردن درس جدید', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
+          backgroundColor: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
+          title: Text('اضافه کردن درس جدید', style: TextStyle(color: __isDarkMode(context) ? Colors.white : Colors.black)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                style: TextStyle(color: __isDarkMode(context) ? Colors.white : Colors.black),
                 controller: lessonNameController,
                 decoration: InputDecoration(
                   labelText: 'نام درس',
-                  labelStyle: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black),
+                  labelStyle: TextStyle(color: __isDarkMode(context) ? Colors.white54 : Colors.black),
                   hintText: 'نام درس را وارد کنید',
-                  hintStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                  hintStyle: TextStyle(color: __isDarkMode(context) ? Colors.white70 : Colors.black),
                   border: OutlineInputBorder(),
                 ),
                 textDirection: TextDirection.rtl,
@@ -980,7 +985,7 @@ class _GradesScreenState extends State<GradesScreen> {
             'ابتدا درس را انتخاب کنید',
             style: TextStyle(
               fontFamily: 'BYekan',
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
+              color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
             ),
           ),
           backgroundColor: Colors.orange[600],
@@ -995,9 +1000,9 @@ class _GradesScreenState extends State<GradesScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
-          title: Text('پاک کردن نمرات', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
-          content: Text('آیا مطمئن هستید که می‌خواهید تمام نمرات درس "${selectedLesson!.name}" را پاک کنید؟', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
+          backgroundColor: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
+          title: Text('پاک کردن نمرات', style: TextStyle(color: __isDarkMode(context) ? Colors.white : Colors.black)),
+          content: Text('آیا مطمئن هستید که می‌خواهید تمام نمرات درس "${selectedLesson!.name}" را پاک کنید؟', style: TextStyle(color: __isDarkMode(context) ? Colors.white : Colors.black)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -1035,7 +1040,7 @@ class _GradesScreenState extends State<GradesScreen> {
               'تمام نمرات درس "${selectedLesson!.name}" پاک شد',
               style: TextStyle(
                 fontFamily: 'BYekan',
-                color: isDarkMode ? Colors.grey[800] : Colors.white,
+                color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
               ),
             ),
             backgroundColor: Colors.green[600],
@@ -1069,7 +1074,7 @@ class _GradesScreenState extends State<GradesScreen> {
               'وضعیت ${student.fullName} پاک شد',
               style: TextStyle(
                 fontFamily: 'BYekan',
-                color: isDarkMode ? Colors.grey[800] : Colors.white,
+                color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
               ),
             ),
             backgroundColor: Colors.orange[600],
@@ -1116,7 +1121,7 @@ class _GradesScreenState extends State<GradesScreen> {
             'وضعیت ${student.fullName} ذخیره شد: $status',
             style: TextStyle(
               fontFamily: 'BYekan',
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
+              color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
             ),
           ),
           backgroundColor: Colors.green[600],
@@ -1150,7 +1155,7 @@ class _GradesScreenState extends State<GradesScreen> {
               'نمره ${student.fullName} پاک شد',
               style: TextStyle(
                 fontFamily: 'BYekan',
-                color: isDarkMode ? Colors.grey[800] : Colors.white,
+                color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
               ),
             ),
             backgroundColor: Colors.orange[600],
@@ -1174,7 +1179,7 @@ class _GradesScreenState extends State<GradesScreen> {
             'نمره باید بین ۰ تا ۲۰ باشد (مثال: ۱۹.۵)',
             style: TextStyle(
               fontFamily: 'BYekan',
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
+              color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
             ),
           ),
           backgroundColor: Colors.red[600],
@@ -1216,7 +1221,7 @@ class _GradesScreenState extends State<GradesScreen> {
             'نمره ${student.fullName} ذخیره شد: ${grade.trim()}',
             style: TextStyle(
               fontFamily: 'BYekan',
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
+              color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
             ),
           ),
           backgroundColor: Colors.green[600],
@@ -1232,11 +1237,11 @@ class _GradesScreenState extends State<GradesScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[800] : Colors.white,
+        color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08),
+            color: __isDarkMode(context) ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08),
             spreadRadius: 0,
             blurRadius: 20,
             offset: const Offset(0, 4),
@@ -1251,13 +1256,13 @@ class _GradesScreenState extends State<GradesScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [Colors.purple[400]!, Colors.purple[600]!],
+                  colors: [Colors.blue[400]!, Colors.blue[600]!],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.purple.withOpacity(0.3),
+                    color: Colors.blue.withOpacity(0.3),
                     spreadRadius: 0,
                     blurRadius: 8,
                     offset: const Offset(0, 2),
@@ -1271,7 +1276,7 @@ class _GradesScreenState extends State<GradesScreen> {
                   student.studentNumber,
                   style: TextStyle(
                     fontFamily: 'BYekan',
-                    color: isDarkMode ? Colors.grey[800] : Colors.white,
+                    color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -1284,7 +1289,7 @@ class _GradesScreenState extends State<GradesScreen> {
                 fontFamily: 'BYekan',
                 fontWeight: FontWeight.w700,
                 fontSize: 17,
-                color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
+                color: __isDarkMode(context) ? Colors.white : const Color(0xFF2D3748),
                 letterSpacing: 0.2,
               ),
             ),
@@ -1301,9 +1306,9 @@ class _GradesScreenState extends State<GradesScreen> {
                     child: Container(
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.grey[700] : Colors.grey[100],
+                        color: __isDarkMode(context) ? Colors.grey[700] : Colors.grey[100],
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!),
+                        border: Border.all(color: __isDarkMode(context) ? Colors.grey[600]! : Colors.grey[300]!),
                       ),
                     child: Directionality(
                       textDirection: TextDirection.rtl,
@@ -1314,7 +1319,7 @@ class _GradesScreenState extends State<GradesScreen> {
                         keyboardType: TextInputType.number,
                         enabled: selectedLesson != null && studentStatuses[student.id] == null,
                         style: TextStyle(
-                          color: isDarkMode ? Colors.white : Colors.black,
+                          color: __isDarkMode(context) ? Colors.white : Colors.black,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -1323,7 +1328,7 @@ class _GradesScreenState extends State<GradesScreen> {
                           hintStyle: TextStyle(
                             fontSize: 13,
 
-                            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                            color: __isDarkMode(context) ? Colors.grey[400] : Colors.grey[600],
                           ),
                           border: InputBorder.none,
                           isCollapsed: true, // این باعث میشه ارتفاع دقیق‌تری بگیره
@@ -1337,7 +1342,7 @@ class _GradesScreenState extends State<GradesScreen> {
                                   'ابتدا درس را انتخاب کنید',
                                   style: TextStyle(
                                     fontFamily: 'BYekan',
-                                    color: isDarkMode ? Colors.grey[800] : Colors.white,
+                                    color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
                                   ),
                                 ),
                                 backgroundColor: Colors.orange[600],
@@ -1366,13 +1371,13 @@ class _GradesScreenState extends State<GradesScreen> {
                     child: Container(
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.grey[700] : Colors.grey[100],
+                        color: __isDarkMode(context) ? Colors.grey[700] : Colors.grey[100],
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!),
+                        border: Border.all(color: __isDarkMode(context) ? Colors.grey[600]! : Colors.grey[300]!),
                       ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
-                        dropdownColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                        dropdownColor: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
                         value: studentStatuses[student.id],
                         isExpanded: true,
                         onChanged: selectedLesson != null && studentGrades[student.id] == null ? (String? newValue) {
@@ -1387,7 +1392,7 @@ class _GradesScreenState extends State<GradesScreen> {
                                   'ابتدا درس را انتخاب کنید',
                                   style: TextStyle(
                                     fontFamily: 'BYekan',
-                                    color: isDarkMode ? Colors.grey[800] : Colors.white,
+                                    color: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
                                   ),
                                 ),
                                 backgroundColor: Colors.orange[600],
@@ -1401,7 +1406,7 @@ class _GradesScreenState extends State<GradesScreen> {
                             'نمره توصیفی',
                             style: TextStyle(
                               fontSize: 12,
-                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                              color: __isDarkMode(context) ? Colors.grey[400] : Colors.grey[600],
                             ),
                           ),
                         ),
@@ -1428,7 +1433,7 @@ class _GradesScreenState extends State<GradesScreen> {
                                 child: Text(
                                   value,
                                   style: TextStyle(
-                                    color: isDarkMode ? Colors.white : Colors.black,
+                                    color: __isDarkMode(context) ? Colors.white : Colors.black,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -1539,22 +1544,22 @@ class _GradesScreenState extends State<GradesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey[50],
+      backgroundColor: __isDarkMode(context) ? Colors.grey[900] : Colors.grey[50],
       appBar: AppBar(
         title: Text(
           'نمرات درس',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: isDarkMode ? Colors.white70 : Colors.white,
+            color: __isDarkMode(context) ? Colors.white70 : Colors.white,
             fontSize: 20
           ),
         ),
-        backgroundColor: isDarkMode ? Colors.purple[900] : Colors.purple[700],
+        backgroundColor: __isDarkMode(context) ? Colors.blue[900] : Colors.blue[700],
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back,
-            color: isDarkMode ? Colors.white70 : Colors.white,
+            color: __isDarkMode(context) ? Colors.white70 : Colors.white,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -1562,24 +1567,12 @@ class _GradesScreenState extends State<GradesScreen> {
           IconButton(
             icon: Icon(
               Icons.clear_all,
-              color: isDarkMode ? Colors.white70 : Colors.white,
+              color: __isDarkMode(context) ? Colors.white70 : Colors.white,
             ),
             onPressed: () {
               _clearAllGrades();
             },
             tooltip: 'پاک کردن نمرات',
-          ),
-          IconButton(
-            icon: Icon(
-              isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: isDarkMode ? Colors.white70 : Colors.white,
-            ),
-            onPressed: () {
-              setState(() {
-                isDarkMode = !isDarkMode;
-              });
-            },
-            tooltip: isDarkMode ? 'حالت روشن' : 'حالت تاریک',
           ),
         ],
       ),
@@ -1591,7 +1584,7 @@ class _GradesScreenState extends State<GradesScreen> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
-                  color: isDarkMode ? Colors.grey[900] : Colors.purple[50],
+                  color: __isDarkMode(context) ? Colors.grey[900] : Colors.blue[50],
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -1600,7 +1593,7 @@ class _GradesScreenState extends State<GradesScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.grey[700],
+                          color: __isDarkMode(context) ? Colors.white : Colors.grey[700],
                         ),
                         textAlign: TextAlign.right,
                       ),
@@ -1647,10 +1640,10 @@ class _GradesScreenState extends State<GradesScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                     decoration: BoxDecoration(
-                                      color: selectedLesson?.id == lesson.id ? Colors.purple[700] : (isDarkMode ? Colors.grey[800] : Colors.grey[200]),
+                                      color: selectedLesson?.id == lesson.id ? Colors.blue[700] : (__isDarkMode(context) ? Colors.grey[800] : Colors.grey[200]),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: selectedLesson?.id == lesson.id ? Colors.purple[700]! : Colors.grey[400]!,
+                                        color: selectedLesson?.id == lesson.id ? Colors.blue[700]! : Colors.grey[400]!,
                                       ),
                                     ),
                                     child: Text(
@@ -1676,7 +1669,7 @@ class _GradesScreenState extends State<GradesScreen> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
-                    color: isDarkMode ? Colors.grey[950] : Colors.grey[50],
+                    color: __isDarkMode(context) ? Colors.grey[950] : Colors.grey[50],
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -1685,7 +1678,7 @@ class _GradesScreenState extends State<GradesScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.grey[700],
+                            color: __isDarkMode(context) ? Colors.white : Colors.grey[700],
                           ),
                           textAlign: TextAlign.right,
                         ),
@@ -1702,10 +1695,10 @@ class _GradesScreenState extends State<GradesScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                     decoration: BoxDecoration(
-                                      color: selectedClass == null ? Colors.purple[700] : (isDarkMode ? Colors.grey[800] : Colors.grey[200]),
+                                      color: selectedClass == null ? Colors.blue[700] : (__isDarkMode(context) ? Colors.grey[800] : Colors.grey[200]),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: selectedClass == null ? Colors.purple[700]! : Colors.grey[400]!,
+                                        color: selectedClass == null ? Colors.blue[700]! : Colors.grey[400]!,
                                       ),
                                     ),
                                     child: Text(
@@ -1726,10 +1719,10 @@ class _GradesScreenState extends State<GradesScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                       decoration: BoxDecoration(
-                                        color: selectedClass?.id == classModel.id ? Colors.purple[700] : (isDarkMode ? Colors.grey[800] : Colors.grey[200]),
+                                        color: selectedClass?.id == classModel.id ? Colors.blue[700] : (__isDarkMode(context) ? Colors.grey[800] : Colors.grey[200]),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: selectedClass?.id == classModel.id ? Colors.purple[700]! : Colors.grey[400]!,
+                                          color: selectedClass?.id == classModel.id ? Colors.blue[700]! : Colors.grey[400]!,
                                         ),
                                       ),
                                       child: Text(
@@ -1761,13 +1754,13 @@ class _GradesScreenState extends State<GradesScreen> {
                         height: 42,
                         width: 80,
                         decoration: BoxDecoration(
-                          color: isDarkMode ? Colors.grey[750] : Colors.purple[50],
+                          color: __isDarkMode(context) ? Colors.grey[750] : Colors.blue[50],
                           borderRadius: BorderRadius.circular(7),
-                          border: Border.all(color: isDarkMode ? Colors.white24 : Colors.purple[700]!),
+                          border: Border.all(color: __isDarkMode(context) ? Colors.white24 : Colors.blue[700]!),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
-                            dropdownColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                            dropdownColor: __isDarkMode(context) ? Colors.grey[800] : Colors.white,
                             value: sortBy,
                             alignment: Alignment.topCenter,
                             isExpanded: true,
@@ -1779,10 +1772,10 @@ class _GradesScreenState extends State<GradesScreen> {
                             hint: Icon(
                               sortBy == 'number' ? Icons.numbers :
                               sortBy == 'name' ? Icons.sort_by_alpha : Icons.person,
-                              color: isDarkMode ? Colors.grey[800] : Colors.purple[700],
+                              color: __isDarkMode(context) ? Colors.grey[800] : Colors.blue[700],
                               size: 20
                             ),
-                            icon: Icon(Icons.keyboard_arrow_down, color: isDarkMode ? Colors.white60 : Colors.purple[700]),
+                            icon: Icon(Icons.keyboard_arrow_down, color: __isDarkMode(context) ? Colors.white60 : Colors.blue[700]),
                             items: <String>['number', 'name', 'firstName'].map<DropdownMenuItem<String>>((String value) {
                               return DropdownMenuItem<String>(
                                 value: value,
@@ -1791,7 +1784,7 @@ class _GradesScreenState extends State<GradesScreen> {
                                     value == 'number' ? 'شماره' :
                                     value == 'name' ? 'فامیلی' : 'نام',
                                     style: TextStyle(
-                                      color: isDarkMode ? Colors.purple[300] : Colors.purple[700],
+                                      color: __isDarkMode(context) ? Colors.blue[300] : Colors.blue[700],
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
                                     ),
@@ -1812,7 +1805,7 @@ class _GradesScreenState extends State<GradesScreen> {
                             height: 42,
                             child: TextField(
                               style: TextStyle(
-                                color: isDarkMode ? Colors.white : Colors.black,
+                                color: __isDarkMode(context) ? Colors.white : Colors.black,
                                 fontSize: 15,
                               ),
                               controller: _searchController,
@@ -1826,17 +1819,17 @@ class _GradesScreenState extends State<GradesScreen> {
                               decoration: InputDecoration(
                                 hintText: 'جستجو در نام دانش‌آموزان',
                                 hintStyle: TextStyle(
-                                  color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
+                                  color: __isDarkMode(context) ? Colors.grey[400] : Colors.grey[500],
                                 ),
                                 prefixIcon: Icon(
                                   Icons.search,
-                                  color: isDarkMode ? Colors.grey[300] : Colors.grey[600],
+                                  color: __isDarkMode(context) ? Colors.grey[300] : Colors.grey[600],
                                 ),
                                 suffixIcon: _searchQuery.isNotEmpty
                                     ? IconButton(
                                   icon: Icon(
                                     Icons.clear,
-                                    color: isDarkMode ? Colors.grey[300] : Colors.grey[600],
+                                    color: __isDarkMode(context) ? Colors.grey[300] : Colors.grey[600],
                                   ),
                                   onPressed: () {
                                     _searchController.clear();
@@ -1849,23 +1842,23 @@ class _GradesScreenState extends State<GradesScreen> {
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   borderSide: BorderSide(
-                                    color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                                    color: __isDarkMode(context) ? Colors.grey[700]! : Colors.grey[300]!,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   borderSide: BorderSide(
-                                    color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                                    color: __isDarkMode(context) ? Colors.grey[700]! : Colors.grey[300]!,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   borderSide: BorderSide(
-                                    color: isDarkMode ? Colors.purple[400]! : Colors.purple[600]!,
+                                    color: __isDarkMode(context) ? Colors.blue[400]! : Colors.blue[600]!,
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: isDarkMode ? Colors.grey[850] : Colors.grey[50],
+                                fillColor: __isDarkMode(context) ? Colors.grey[850] : Colors.grey[50],
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 15,
                                   vertical: 12,
@@ -1886,10 +1879,10 @@ class _GradesScreenState extends State<GradesScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isDarkMode ? Colors.blue[900] : Colors.blue[50],
+                      color: __isDarkMode(context) ? Colors.blue[900] : Colors.blue[50],
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isDarkMode ? Colors.blue[700]! : Colors.blue[200]!,
+                        color: __isDarkMode(context) ? Colors.blue[700]! : Colors.blue[200]!,
                         width: 1,
                       ),
                     ),
@@ -1903,7 +1896,7 @@ class _GradesScreenState extends State<GradesScreen> {
                             textDirection: TextDirection.rtl,
                             style: TextStyle(
                               fontFamily: 'BYekan',
-                              color: isDarkMode ? Colors.blue[200] : Colors.blue[700],
+                              color: __isDarkMode(context) ? Colors.blue[200] : Colors.blue[700],
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
 
@@ -1913,7 +1906,7 @@ class _GradesScreenState extends State<GradesScreen> {
                         SizedBox(width: 5),
                         Icon(
                           Icons.info_outline,
-                          color: isDarkMode ? Colors.blue[300] : Colors.blue[600],
+                          color: __isDarkMode(context) ? Colors.blue[300] : Colors.blue[600],
                           size: 20,
                         ),
                       ],
@@ -1931,14 +1924,14 @@ class _GradesScreenState extends State<GradesScreen> {
                               Icon(
                                 Icons.school,
                                 size: 64,
-                                color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
+                                color: __isDarkMode(context) ? Colors.grey[500] : Colors.grey[400],
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 'هیچ دانش‌آموزی ثبت نشده است',
                                 style: TextStyle(
                                   fontSize: 18,
-                                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                                  color: __isDarkMode(context) ? Colors.grey[400] : Colors.grey[600],
                                 ),
                               ),
                             ],
@@ -1952,14 +1945,14 @@ class _GradesScreenState extends State<GradesScreen> {
                                   Icon(
                                     Icons.search_off,
                                     size: 64,
-                                    color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
+                                    color: __isDarkMode(context) ? Colors.grey[500] : Colors.grey[400],
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
                                     'هیچ دانش‌آموزی با این نام یافت نشد',
                                     style: TextStyle(
                                       fontSize: 16,
-                                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                                      color: __isDarkMode(context) ? Colors.grey[400] : Colors.grey[600],
                                     ),
                                   ),
                                 ],
@@ -1978,10 +1971,10 @@ class _GradesScreenState extends State<GradesScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? Colors.grey[900] : Colors.white,
+                    color: __isDarkMode(context) ? Colors.grey[900] : Colors.white,
                     border: Border(
                       top: BorderSide(
-                        color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                        color: __isDarkMode(context) ? Colors.grey[700]! : Colors.grey[300]!,
                         width: 1,
                       ),
                     ),

@@ -14,7 +14,6 @@ class _TodoScreenState extends State<TodoScreen> {
   DateTime selectedDate = DateTime.now();
   List<TodoItem> todos = [];
   bool isLoading = true;
-  bool isDarkMode = false;
 
   @override
   void initState() {
@@ -110,20 +109,20 @@ class _TodoScreenState extends State<TodoScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          backgroundColor: _isDarkMode(context) ? Colors.grey[800] : Colors.white,
           title: Text(
             'افزودن یادداشت',
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            style: TextStyle(color: _isDarkMode(context) ? Colors.white : Colors.black),
           ),
           content: TextField(
             controller: controller,
             textDirection: TextDirection.rtl,
             textAlign: TextAlign.right,
             maxLines: 2,
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            style: TextStyle(color: _isDarkMode(context) ? Colors.white : Colors.black),
             decoration: InputDecoration(
               labelText: 'متن یادداشت',
-              labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black87),
+              labelStyle: TextStyle(color: _isDarkMode(context) ? Colors.white70 : Colors.black87),
               border: const OutlineInputBorder(),
             ),
           ),
@@ -165,20 +164,20 @@ class _TodoScreenState extends State<TodoScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          backgroundColor: _isDarkMode(context) ? Colors.grey[800] : Colors.white,
           title: Text(
             'ویرایش یادداشت',
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            style: TextStyle(color: _isDarkMode(context) ? Colors.white : Colors.black),
           ),
           content: TextField(
             controller: controller,
             textDirection: TextDirection.rtl,
             textAlign: TextAlign.right,
             maxLines: 2,
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            style: TextStyle(color: _isDarkMode(context) ? Colors.white : Colors.black),
             decoration: InputDecoration(
               labelText: 'متن یادداشت',
-              labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black87),
+              labelStyle: TextStyle(color: _isDarkMode(context) ? Colors.white70 : Colors.black87),
               border: const OutlineInputBorder(),
             ),
           ),
@@ -219,14 +218,14 @@ class _TodoScreenState extends State<TodoScreen> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          backgroundColor: _isDarkMode(context) ? Colors.grey[800] : Colors.white,
           title: Text(
             'حذف یادداشت',
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            style: TextStyle(color: _isDarkMode(context) ? Colors.white : Colors.black),
           ),
           content: Text(
             'آیا مطمئن هستید که می‌خواهید این یادداشت را حذف کنید؟',
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            style: TextStyle(color: _isDarkMode(context) ? Colors.white : Colors.black),
           ),
           actions: [
             TextButton(
@@ -248,10 +247,13 @@ class _TodoScreenState extends State<TodoScreen> {
     }
   }
 
+  bool _isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Get dark mode from theme
-    isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDarkMode = _isDarkMode(context);
     
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey[50],
@@ -432,7 +434,7 @@ class _TodoScreenState extends State<TodoScreen> {
                                                 const SizedBox(width: 8),
                                                 Text(
                                                   'ویرایش',
-                                                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                                                  style: TextStyle(color: _isDarkMode(context) ? Colors.white : Colors.black),
                                                 ),
                                               ],
                                             ),
