@@ -101,10 +101,10 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Future<void> _addTodo() async {
-    if (todos.length >= 6) {
+    if (todos.length >= 8) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('حداکثر ۶ مورد می‌توانید اضافه کنید'),
+          content: const Text('حداکثر 8 مورد می‌توانید اضافه کنید'),
           backgroundColor: Colors.red[600],
         ),
       );
@@ -266,9 +266,16 @@ class _TodoScreenState extends State<TodoScreen> {
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey[50],
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white70 : Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        automaticallyImplyLeading: false,
         title: const Text(
           'فهرست کارها',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold , color: Colors.white , fontSize: 20),
         ),
         backgroundColor: isDarkMode ? Colors.blue[900] : Colors.blue[700],
         elevation: 0,

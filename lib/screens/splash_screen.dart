@@ -117,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen>
                         
                         // App Title
                         const Text(
-                          'سیستم مدیریت کلاس معلم',
+                          'سیستم مدیریت کلاس کلاسیار',
                           style: TextStyle(
                             fontFamily: 'BYekan',
                             fontSize: 28,
