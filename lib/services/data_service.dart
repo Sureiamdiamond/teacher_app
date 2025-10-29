@@ -5,6 +5,7 @@ import '../models/attendance_record.dart';
 import '../models/class_model.dart';
 import '../models/lesson.dart';
 import '../models/grade.dart';
+import '../models/todo_item.dart';
 
 class DataService {
   static const String _studentsKey = 'students';
@@ -12,6 +13,7 @@ class DataService {
   static const String _classesKey = 'classes';
   static const String _lessonsKey = 'lessons';
   static const String _gradesKey = 'grades';
+  static const String _todosKey = 'todos';
 
   // Student management
   static Future<List<Student>> getStudents() async {
@@ -311,5 +313,60 @@ class DataService {
   static Future<List<Grade>> getGradesForStudent(String studentId) async {
     final grades = await getGrades();
     return grades.where((grade) => grade.studentId == studentId).toList();
+  }
+
+  // Todo management
+  static Future<List<TodoItem>> getTodos() async {
+    final prefs = await SharedPreferences.getInstance();
+    final todosJson = prefs.getStringList(_todosKey) ?? [];
+    return todosJson
+        .map((json) => TodoItem.fromJson(jsonDecode(json)))
+        .toList();
+  }
+
+  static Future<void> saveTodos(List<TodoItem> todos) async {
+    final prefs = await SharedPreferences.getInstance();
+    final todosJson = todos
+        .map((todo) => jsonEncode(todo.toJson()))
+        .toList();
+    await prefs.setStringList(_todosKey, todosJson);
+  }
+
+  static Future<List<TodoItem>> getTodosForDate(DateTime date) async {
+    final todos = await getTodos();
+    return todos.where((todo) => 
+        todo.date.year == date.year &&
+        todo.date.month == date.month &&
+        todo.date.day == date.day).toList();
+  }
+
+  static Future<void> addTodo(TodoItem todo) async {
+    final todos = await getTodos();
+    todos.add(todo);
+    await saveTodos(todos);
+  }
+
+  static Future<void> updateTodo(TodoItem todo) async {
+    final todos = await getTodos();
+    final index = todos.indexWhere((t) => t.id == todo.id);
+    if (index != -1) {
+      todos[index] = todo;
+      await saveTodos(todos);
+    }
+  }
+
+  static Future<void> deleteTodo(String todoId) async {
+    final todos = await getTodos();
+    todos.removeWhere((t) => t.id == todoId);
+    await saveTodos(todos);
+  }
+
+  static Future<void> deleteTodosForDate(DateTime date) async {
+    final todos = await getTodos();
+    todos.removeWhere((todo) => 
+        todo.date.year == date.year &&
+        todo.date.month == date.month &&
+        todo.date.day == date.day);
+    await saveTodos(todos);
   }
 }

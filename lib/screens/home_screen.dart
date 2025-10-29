@@ -11,6 +11,7 @@ import 'attendance_history_screen.dart';
 import 'edit_student_screen.dart';
 import 'class_management_screen.dart';
 import 'grades_screen.dart';
+import 'todo_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1642,6 +1643,14 @@ class _HomeScreenState extends State<HomeScreen> {
                      ),
                    );
                    break;
+                 case 'todo':
+                   Navigator.push(
+                     context,
+                     MaterialPageRoute(
+                       builder: (context) => const TodoScreen(),
+                     ),
+                   );
+                   break;
                }
              },
             itemBuilder: (BuildContext context) => [
@@ -1675,6 +1684,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(Icons.grade, color: Colors.purple[700]),
                     const SizedBox(width: 8),
                      Text('نمرات درس' , style: TextStyle(color:  isDarkMode ?Colors.white70:Colors.black),),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'todo',
+                enabled: true,
+                child: Row(
+                  children: [
+                    Icon(Icons.checklist, color: Colors.teal[700]),
+                    const SizedBox(width: 8),
+                     Text('فهرست کارها' , style: TextStyle(color:  isDarkMode ?Colors.white70:Colors.black),),
                   ],
                 ),
               ),
@@ -1729,7 +1749,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Date display with navigation
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(10),
                   color:  isDarkMode ?Colors.grey[900] : Colors.blue[50],
                   child: Row(
                     children: [
@@ -1762,7 +1782,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: GestureDetector(
                           onTap: _selectDate,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             decoration: BoxDecoration(
                               color:  isDarkMode ? Colors.blue[900]:  Colors.blue[100],
                               borderRadius: BorderRadius.circular(8),
@@ -1820,7 +1840,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (classes.isNotEmpty)
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.only(left: 16 , right: 16 , bottom: 5 , top: 5),
                     color:  isDarkMode ?Colors.grey[950] : Colors.grey[50],
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -1845,7 +1865,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 GestureDetector(
                                   onTap: () => _selectClass(null),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     decoration: BoxDecoration(
                                       color: selectedClass == null ? Colors.blue[700] :  isDarkMode ?Colors.grey[880] :Colors.grey[200],
                                       borderRadius: BorderRadius.circular(20),
@@ -1901,7 +1921,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (!_isToday(selectedDate))
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     child: ElevatedButton.icon(
                       onPressed: () {
                         setState(() {
@@ -1933,7 +1953,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Search field and Sort options
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
                     child: Row(
                       children: [
 
